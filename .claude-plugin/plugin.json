@@ -1,0 +1,5 @@
+{
+  "name": "harness-kit",
+  "version": "1.1.0",
+  "description": "Spec-driven harness: skills + agents + commands + quality gates. Scenarios: greenfield / onboarding / existing project."
+}

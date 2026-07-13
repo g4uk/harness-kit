@@ -1,0 +1,24 @@
+# Invariant #6 as code: a harness change without an eval run doesn't merge.
+# Put into .github/workflows/. Requires secrets.ANTHROPIC_API_KEY.
+name: harness-evals
+on:
+  pull_request:
+    paths:
+      - '.claude/**'
+      - 'CLAUDE.md'
+      - 'evals/**'
+jobs:
+  evals:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - uses: actions/setup-go@v5
+        with: { go-version: 'stable' }
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+      - name: Run evals
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: ./evals/run.sh   # exit != 0 if pass rate < 100% → red PR

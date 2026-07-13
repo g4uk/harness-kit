@@ -1,0 +1,19 @@
+{
+  "_comment": "For plugin mode. For project mode see settings/settings.project.json (install.sh puts it in place).",
+  "hooks": {
+    "PostToolUse": [
+      { "matcher": "Write|Edit",
+        "hooks": [
+          { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/secrets-scan.sh" },
+          { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/fmt.sh" }
+        ] }
+    ],
+    "PreToolUse": [
+      { "matcher": "Bash",
+        "hooks": [ { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/guard.sh" } ] }
+    ],
+    "Stop": [
+      { "hooks": [ { "type": "command", "command": "${CLAUDE_PLUGIN_ROOT}/hooks/tests-green.sh" } ] }
+    ]
+  }
+}
