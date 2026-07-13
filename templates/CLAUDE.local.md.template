@@ -1,0 +1,13 @@
+# {{PROJECT}} — my local notes (do NOT commit; add to .git/info/exclude)
+
+## Commands (verified by me)
+- tests: {{the exact incantation that actually worked, with env}}
+
+## How things are done here (per the team, with dates!)
+- {{YYYY-MM-DD, who said it}}: {{rule}}
+
+## Dragons
+- {{module}}: {{why not to touch}}
+
+## My WTFs (verify later)
+- {{...}}

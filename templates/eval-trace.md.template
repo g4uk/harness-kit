@@ -1,0 +1,8 @@
+# {{NNN}}: {{name}}
+## Prompt
+{{the task in one paragraph, as a user would phrase it}}
+## Checks
+- [ ] cmd: go test ./internal/{{module}}/
+- [ ] cmd: ! git grep -nE '{{forbidden pattern}}' -- '{{path}}'
+- [ ] cmd: git grep -q '{{expected line}}' -- '{{path}}'
+- [ ] (manual) {{what to eyeball if a script can't check it}}

@@ -1,0 +1,6 @@
+# Architecture Decisions
+
+# 001: {{decision}}
+Why: {{...}}
+Rejected: {{alternatives and why}}
+Cost: {{the trade-off we accept}}
