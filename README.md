@@ -1,13 +1,14 @@
-# harness-kit v1.2.1
+# harness-kit v1.3
 
 A shared harness core for three Claude Code working scenarios.
 Progression is gated by evidence (exit criteria per stage), not by a calendar.
 
 ## Requirements
-- **bash** + **jq** (for guard.sh). Without jq, guard.sh is fail-closed (blocks EVERYTHING).
-  - macOS: `brew install jq`
-  - Linux: `apt install jq` or `yum install jq`
-  - Windows: Not supported. Run via WSL or Docker.
+- **docker** (mandatory for eval runs). Policy: every project-touching execution (agent + checks) runs in the harness-runner sandbox.
+- **bash** + **jq** (for guard.sh and local orchestration).
+  - macOS: `brew install jq docker`
+  - Linux: `apt install jq` + install Docker from docker.io
+  - Windows: Not supported. Run via WSL with Docker.
 - **git** (obviously)
 - **gitleaks** (recommended for secrets-scan accuracy; falls back to grep)
 
@@ -24,20 +25,23 @@ ci/          harness-evals.yml (invariant #6 as code) · agent-review.yml
              plan-verify.yml (custom plan coherence checks) · hooks-test.yml (regression detection)
 templates/   CLAUDE.md, CLAUDE.local.md, surface-map, decisions, metrics,
              dispatch-matrix, spec, plan, eval-trace
-evals/       run.sh — executes "cmd:" checks from traces; exit≠0 on failure · traces/001-example.md
+evals/       run.sh — Docker-only orchestrator (container policy) · traces/001-example.md
 scenarios/   greenfield · onboarding · existing-own — checklist overlays
 docs/        full step-by-step guides the kit was distilled from
 examples/    craftplan-spec.md, plan.md, retro.md — complete spec→plan→retro cycle (learning reference)
 extras/      harness-dashboard.jsx — interactive progress tracker (Claude artifact)
-tests/       hooks.test.sh — smoke tests for guard.sh patterns (refspec, .env, sh -c)
+tests/       hooks.test.sh — guard.sh regression tests · runner-smoke.sh — eval runner self-test
 build/       dashboard.sh — generates artifact-ready version for offline use
+docker/      Dockerfile (harness-runner image) · claude-run.sh · exec.sh (container boundary)
 install.sh   → project .claude/ (with settings and CI) or ~/.claude (--user)
 VERSION      Kit version for update detection
 ```
 
-## Security model (two layers + a scanner)
+## Security model (three layers)
+0. **container boundary** — all headless runs (agent + checks) happen in harness-runner sandbox.
+   Non-root user, dropped capabilities, resource limits, throwaway mounts.
 1. **permissions in settings.json — deny-by-default.** Only the allow-list is permitted.
-   The primary layer: it can't be bypassed by rephrasing a command.
+   Primary layer for interactive sessions on the host: can't be bypassed by rephrasing.
 2. **guard.sh** — readable block explanations + patterns beyond the permissions syntax
    (refspec force `+main`, `sh -c` wrappers, prod migrations). Fail-closed without jq.
 3. **secrets-scan.sh** — catches secrets in just-written files (gitleaks, grep fallback).
@@ -74,6 +78,16 @@ Takes ~2 minutes to read; shows the full harness pattern in miniature.
 | Gates | commit #1 | user-level immediately; in repo — after the trust gate | quality-gates stage |
 | Install level | .claude/ in repo | ~/.claude | .claude/ in repo |
 | Evals | grow via /retro | after legitimization | 20 traces from done tasks |
+
+## Changelog v1.3 (Docker-only project policy)
+- **Docker container boundary**: all headless runs (agent + checks/tests) execute in harness-runner image — no exceptions.
+- **evals/run.sh**: rewritten as Docker orchestrator only; fail-fast without docker (escape hatch HARNESS_ALLOW_HOST=1 for debug).
+- **Clone instead of worktree**: worktree .git file has absolute host path, breaks on container mount; local clone is self-contained & fast.
+- **tests/runner-smoke.sh**: eval runner's own smoke test (Go fixture + trivial trace; PASS proves sandbox + real diff + check execution).
+- **ci/harness-evals.yml**: builds harness-runner image; EVAL_LIMIT via github.event_name (3 traces on PR, all on main).
+- **BSD-portable sed**: no grep -oP (macOS incompatible); using sed -n with portable patterns.
+- **docker/**:  Dockerfile (node20 + claude-code + Go + non-root) · claude-run.sh (5min timeout + caps-drop + resource limits) · exec.sh (checks/tests).
+- **Known boundary** (documented): network egress not restricted (needs api.anthropic.com); interactive sessions stay on host.
 
 ## Changelog v1.2.1 (CRITICAL: false-green eval fix)
 - **CRITICAL**: eval-runner was using `--allowedTools fetch` (read-only)

@@ -1,61 +1,63 @@
 #!/bin/bash
-# Eval runner: fresh worktree per trace → headless run → deterministic checks.
-# Checks in a trace: lines "- [ ] cmd: <shell>" are executed in the worktree (exit 0 = PASS).
-# Lines without "cmd:" are documentation for humans; the script skips them.
+# Eval runner. POLICY: every project-touching execution (agent AND checks)
+# happens inside the harness-runner Docker container. This script only orchestrates.
+#
+# HARNESS_ALLOW_HOST=1 is an escape hatch for debugging — never for real runs.
 set -u
 REPO=$(git rev-parse --show-toplevel)
+KIT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+RUN="$KIT_DIR/docker/claude-run.sh"
+EXEC="$KIT_DIR/docker/exec.sh"
+
+if [ "${HARNESS_ALLOW_HOST:-}" != "1" ]; then
+  command -v docker >/dev/null || { echo "FATAL: docker required (policy: project runs only in Docker)."; exit 1; }
+fi
+
 RESULTS="$REPO/evals/results/$(date +%F-%H%M).md"
 mkdir -p "$REPO/evals/results"
 echo "# Eval run $(date -Iseconds)" > "$RESULTS"
 PASS=0; TOTAL=0
 
-# EDIT_ME: baseline checks for every trace
+# EDIT_ME: baseline check for every trace (runs inside the container)
 BASE_CHECK="go test ./..."
-# EDIT_ME: base branch for worktrees (auto-detected; override if needed)
+# EDIT_ME: base branch (auto-detected; override if needed)
 BASE_BRANCH=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|origin/||')
 BASE_BRANCH=${BASE_BRANCH:-$(git rev-parse --abbrev-ref HEAD)}
 
-# Sample mode for PR (3 traces); full run for main/push (all). Auto-detects via GITHUB_EVENT_NAME.
-# Override with EVAL_LIMIT env var if needed.
-if [ -z "${EVAL_LIMIT:-}" ]; then
-  # Auto-detect: PR = sample, main/push = full
-  if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
-    EVAL_LIMIT=3
-  else
-    EVAL_LIMIT=""  # No limit = run all
-  fi
-fi
+# EVAL_LIMIT: run only the first N traces (PR sampling). Unset/0 = all.
+LIMIT="${EVAL_LIMIT:-0}"
 
-TRACES=($(ls "$REPO"/evals/traces/*.md 2>/dev/null | sort))
-if [ -n "$EVAL_LIMIT" ] && [ ${#TRACES[@]} -gt "$EVAL_LIMIT" ]; then
-  TRACES=($(printf '%s\n' "${TRACES[@]}" | head -n "$EVAL_LIMIT"))
-  echo ">> PR mode: sampling ${#TRACES[@]} of $(ls "$REPO"/evals/traces/*.md 2>/dev/null | wc -l) traces (set EVAL_LIMIT=0 for full)" >> "$RESULTS"
-fi
-
-for TRACE in "${TRACES[@]}"; do
+for TRACE in "$REPO"/evals/traces/*.md; do
   [ -e "$TRACE" ] || continue
+  [ "$LIMIT" != "0" ] && [ "$TOTAL" -ge "$LIMIT" ] && break
   NAME=$(basename "$TRACE" .md); TOTAL=$((TOTAL+1))
+  echo ">> trace $NAME (up to 5 min)..."
+
+  # Plain clone, not a worktree: a worktree's .git file holds an absolute HOST
+  # path and breaks when only the worktree is mounted into a container.
   WT="/tmp/eval-$NAME"
-  git worktree remove -f "$WT" >/dev/null 2>&1 || true
-  git worktree add -f "$WT" "$BASE_BRANCH" >/dev/null 2>&1
+  rm -rf "$WT"
+  git clone --quiet --branch "$BASE_BRANCH" "$REPO" "$WT"
 
   PROMPT=$(awk '/^## Prompt/{f=1;next}/^## /{f=0}f' "$TRACE")
-  # Isolated throwaway worktree in CI: agent needs full permissions to implement changes.
-  # Safety: worktree is in /tmp, repo is fresh per trace, no prod/main diffs escape.
-  (cd "$WT" && timeout 300 claude -p "$PROMPT" --output-format json --dangerously-skip-permissions > "/tmp/eval-$NAME.json" 2>&1 || echo "TIMEOUT/BLOCKED" >> "/tmp/eval-$NAME.json")
+  "$RUN" "$WT" "$PROMPT" "/tmp/eval-$NAME.json" || true
 
   OK=1
-  (cd "$WT" && eval "$BASE_CHECK" >/dev/null 2>&1) || OK=0
-  # Agent MUST make changes; empty diff = no implementation = false green
-  (cd "$WT" && ! git diff --quiet) || { OK=0; echo "  - FAIL: agent made no changes" >> "$RESULTS"; }
+  # Empty-run detector: the agent MUST have changed something.
+  "$EXEC" "$WT" "! git diff --quiet || ! git diff --cached --quiet || [ -n \"\$(git status --porcelain)\" ]" \
+    || { OK=0; echo "  - FAIL: empty run (no diff)" >> "$RESULTS"; }
+  "$EXEC" "$WT" "$BASE_CHECK" >/dev/null 2>&1 || { OK=0; echo "  - FAIL: base check" >> "$RESULTS"; }
+
+  # BSD/GNU-portable extraction of "- [ ] cmd: <shell>" checks (no grep -P)
   while IFS= read -r CHECK; do
-    (cd "$WT" && eval "$CHECK" >/dev/null 2>&1) || { OK=0; echo "  - FAIL check: $CHECK" >> "$RESULTS"; }
-  done < <(grep -E '^\s*-\s*\[\s*\]\s*cmd:' "$TRACE" | sed -E 's/.*cmd:[[:space:]]*//')
+    [ -z "$CHECK" ] && continue
+    "$EXEC" "$WT" "$CHECK" >/dev/null 2>&1 || { OK=0; echo "  - FAIL check: $CHECK" >> "$RESULTS"; }
+  done < <(sed -n 's/^[[:space:]]*-[[:space:]]*\[[[:space:]]*\][[:space:]]*cmd:[[:space:]]*//p' "$TRACE")
 
   if [ "$OK" = 1 ]; then echo "- $NAME: PASS" >> "$RESULTS"; PASS=$((PASS+1));
   else echo "- $NAME: FAIL" >> "$RESULTS"; fi
-  git worktree remove -f "$WT" >/dev/null 2>&1
+  rm -rf "$WT"
 done
 echo "" >> "$RESULTS"; echo "**$PASS/$TOTAL**" >> "$RESULTS"
 echo "Pass rate: $PASS/$TOTAL → $RESULTS"
-[ "$PASS" = "$TOTAL" ]
+[ "$PASS" = "$TOTAL" ] && [ "$TOTAL" -gt 0 ]
