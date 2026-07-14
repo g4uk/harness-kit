@@ -15,7 +15,15 @@ BASE_CHECK="go test ./..."
 BASE_BRANCH=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|origin/||')
 BASE_BRANCH=${BASE_BRANCH:-$(git rev-parse --abbrev-ref HEAD)}
 
-for TRACE in "$REPO"/evals/traces/*.md; do
+# Sample mode for PR (EVAL_LIMIT=N); full run for main. Set EVAL_LIMIT env var before calling.
+EVAL_LIMIT=${EVAL_LIMIT:-}
+TRACES=($(ls "$REPO"/evals/traces/*.md 2>/dev/null | sort))
+if [ -n "$EVAL_LIMIT" ] && [ ${#TRACES[@]} -gt "$EVAL_LIMIT" ]; then
+  TRACES=($(printf '%s\n' "${TRACES[@]}" | head -n "$EVAL_LIMIT"))
+  echo ">> EVAL_LIMIT=$EVAL_LIMIT: sampling ${#TRACES[@]} of $TOTAL traces" >> "$RESULTS"
+fi
+
+for TRACE in "${TRACES[@]}"; do
   [ -e "$TRACE" ] || continue
   NAME=$(basename "$TRACE" .md); TOTAL=$((TOTAL+1))
   WT="/tmp/eval-$NAME"
@@ -23,7 +31,8 @@ for TRACE in "$REPO"/evals/traces/*.md; do
   git worktree add -f "$WT" "$BASE_BRANCH" >/dev/null 2>&1
 
   PROMPT=$(awk '/^## Prompt/{f=1;next}/^## /{f=0}f' "$TRACE")
-  (cd "$WT" && claude -p "$PROMPT" --output-format json > "/tmp/eval-$NAME.json" 2>&1)
+  # Headless mode: --allowedTools blocks interactive prompts + 5min timeout prevents hang.
+  (cd "$WT" && timeout 300 claude -p "$PROMPT" --output-format json --allowedTools fetch > "/tmp/eval-$NAME.json" 2>&1 || echo "TIMEOUT/BLOCKED" >> "/tmp/eval-$NAME.json")
 
   OK=1
   (cd "$WT" && eval "$BASE_CHECK" >/dev/null 2>&1) || OK=0

@@ -1,7 +1,15 @@
-# harness-kit v1.1
+# harness-kit v1.2
 
 A shared harness core for three Claude Code working scenarios.
 Progression is gated by evidence (exit criteria per stage), not by a calendar.
+
+## Requirements
+- **bash** + **jq** (for guard.sh). Without jq, guard.sh is fail-closed (blocks EVERYTHING).
+  - macOS: `brew install jq`
+  - Linux: `apt install jq` or `yum install jq`
+  - Windows: Not supported. Run via WSL or Docker.
+- **git** (obviously)
+- **gitleaks** (recommended for secrets-scan accuracy; falls back to grep)
 
 ## Structure
 ```
@@ -34,8 +42,17 @@ The permissions syntax evolves — verify at docs.claude.com/en/docs/claude-code
 ```bash
 ./install.sh ~/dev/myproject     # your own project: .claude/ + settings + CI + evals
 ./install.sh --user              # someone else's project: personal level, nothing in the repo
+./install.sh ~/dev/myproject --update  # update existing .claude/ to latest kit version
 ```
 Then open your scenario in scenarios/ and follow the checklist. Gate smoke test — step 4 of install.sh output.
+
+## Learn by Example
+See `examples/craftplan-*.md` for a complete spec → plan → retro cycle in one go:
+- Spec + design decisions
+- Detailed plan with phases and effort estimates
+- Retro with metrics, divergences, and next-phase decisions
+
+Takes ~2 minutes to read; shows the full harness pattern in miniature.
 
 ## Invariants
 1. perceive → spec → plan → implement → verify (/verify is a command, not a mood).
@@ -53,6 +70,15 @@ Then open your scenario in scenarios/ and follow the checklist. Gate smoke test 
 | Install level | .claude/ in repo | ~/.claude | .claude/ in repo |
 | Evals | grow via /retro | after legitimization | 20 traces from done tasks |
 
+## Changelog v1.2 (production hardening)
+- **eval-runner fix**: `--allowedTools fetch` + 5min timeout prevents CI hang on permission-blocked traces
+- **EVAL_LIMIT**: sample mode (PR: 3 traces) vs full run (main branch) to reduce CI cost/time
+- **hooks-test.yml**: automated regression detection for guard.sh patterns (refspec, .env, wrappers)
+- **plan-verify.yml**: explicit CI workflow stub for custom plan coherence checks
+- **install.sh**: `--update` mode + VERSION tracking (detect outdated .claude/ directories)
+- **guard.sh**: warning comment about wide permissions like `Bash(cat:*)` (dangerous; narrow to dir)
+- **Requirements**: explicit bash + jq (Windows unsupported) in README
+
 ## Changelog v1.1 (review patch)
 - permissions deny-by-default (project + user samples) — the primary security layer
 - secrets-scan.sh on Write|Edit; guard.sh: fail-closed, +refspec-force, +sh -c
@@ -69,8 +95,10 @@ Full guides the kit is distilled from (all examples use CraftPlan, a fictional r
 - docs/greenfield-harness.md — starting a project from scratch, harness-first
 
 ## Extras
-- extras/harness-dashboard.jsx — interactive checklist/metrics dashboard
+- **harness-dashboard.jsx** — interactive checklist/metrics dashboard
   (paste into a Claude.ai artifact; progress persists between sessions)
+  Build script: `./build/dashboard.sh` → `dist/harness-dashboard-artifact.jsx`
+  Export metrics to markdown for docs/metrics.md sync
 
 ## License
 MIT — see LICENSE.

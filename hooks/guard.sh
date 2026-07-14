@@ -16,6 +16,10 @@ echo "$CMD" | grep -qiE '(migrate|goose|rake db).*(prod|production|live)' && den
 echo "$CMD" | grep -qE '(cat|less|more|grep|head|tail) [^|;&]*\.env(\.|$|[^a-z])' && deny "reading .env / .env.* is forbidden"
 echo "$CMD" | grep -qE '(sh|bash) -c'                            && deny "sh -c wrappers are forbidden — run the command directly so gates can see it"
 echo "$CMD" | grep -qE 'chmod \+x /tmp'                          && deny "executable scripts from /tmp are forbidden"
+
 # EDIT_ME: add project-specific denials
+# WARNING: wide permissions like Bash(cat:*) or Bash(grep:*) read ALL files without pattern-matching.
+# This guard hook is your defense; keep it updated. If the permission is truly needed,
+# narrow it to a directory: Bash(cat:/app/src/**) or add EDIT_ME patterns here.
 
 exit 0
