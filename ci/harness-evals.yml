@@ -21,5 +21,5 @@ jobs:
       - name: Run evals
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-          EVAL_LIMIT: 3   # Sample 3 traces on PR; set to empty for main branch for full coverage
-        run: ./evals/run.sh   # exit != 0 if pass rate < 100% → red PR
+          GITHUB_EVENT_NAME: ${{ github.event_name }}
+        run: ./evals/run.sh   # PR: 3 traces (sample); push: all traces (full coverage)

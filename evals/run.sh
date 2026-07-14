@@ -15,12 +15,21 @@ BASE_CHECK="go test ./..."
 BASE_BRANCH=$(git symbolic-ref --short refs/remotes/origin/HEAD 2>/dev/null | sed 's|origin/||')
 BASE_BRANCH=${BASE_BRANCH:-$(git rev-parse --abbrev-ref HEAD)}
 
-# Sample mode for PR (EVAL_LIMIT=N); full run for main. Set EVAL_LIMIT env var before calling.
-EVAL_LIMIT=${EVAL_LIMIT:-}
+# Sample mode for PR (3 traces); full run for main/push (all). Auto-detects via GITHUB_EVENT_NAME.
+# Override with EVAL_LIMIT env var if needed.
+if [ -z "${EVAL_LIMIT:-}" ]; then
+  # Auto-detect: PR = sample, main/push = full
+  if [ "$GITHUB_EVENT_NAME" = "pull_request" ]; then
+    EVAL_LIMIT=3
+  else
+    EVAL_LIMIT=""  # No limit = run all
+  fi
+fi
+
 TRACES=($(ls "$REPO"/evals/traces/*.md 2>/dev/null | sort))
 if [ -n "$EVAL_LIMIT" ] && [ ${#TRACES[@]} -gt "$EVAL_LIMIT" ]; then
   TRACES=($(printf '%s\n' "${TRACES[@]}" | head -n "$EVAL_LIMIT"))
-  echo ">> EVAL_LIMIT=$EVAL_LIMIT: sampling ${#TRACES[@]} of $TOTAL traces" >> "$RESULTS"
+  echo ">> PR mode: sampling ${#TRACES[@]} of $(ls "$REPO"/evals/traces/*.md 2>/dev/null | wc -l) traces (set EVAL_LIMIT=0 for full)" >> "$RESULTS"
 fi
 
 for TRACE in "${TRACES[@]}"; do
@@ -31,11 +40,14 @@ for TRACE in "${TRACES[@]}"; do
   git worktree add -f "$WT" "$BASE_BRANCH" >/dev/null 2>&1
 
   PROMPT=$(awk '/^## Prompt/{f=1;next}/^## /{f=0}f' "$TRACE")
-  # Headless mode: --allowedTools blocks interactive prompts + 5min timeout prevents hang.
-  (cd "$WT" && timeout 300 claude -p "$PROMPT" --output-format json --allowedTools fetch > "/tmp/eval-$NAME.json" 2>&1 || echo "TIMEOUT/BLOCKED" >> "/tmp/eval-$NAME.json")
+  # Isolated throwaway worktree in CI: agent needs full permissions to implement changes.
+  # Safety: worktree is in /tmp, repo is fresh per trace, no prod/main diffs escape.
+  (cd "$WT" && timeout 300 claude -p "$PROMPT" --output-format json --dangerously-skip-permissions > "/tmp/eval-$NAME.json" 2>&1 || echo "TIMEOUT/BLOCKED" >> "/tmp/eval-$NAME.json")
 
   OK=1
   (cd "$WT" && eval "$BASE_CHECK" >/dev/null 2>&1) || OK=0
+  # Agent MUST make changes; empty diff = no implementation = false green
+  (cd "$WT" && ! git diff --quiet) || { OK=0; echo "  - FAIL: agent made no changes" >> "$RESULTS"; }
   while IFS= read -r CHECK; do
     (cd "$WT" && eval "$CHECK" >/dev/null 2>&1) || { OK=0; echo "  - FAIL check: $CHECK" >> "$RESULTS"; }
   done < <(grep -oP '^\s*-\s*\[\s*\]\s*cmd:\s*\K.*' "$TRACE")

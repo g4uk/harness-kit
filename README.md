@@ -21,13 +21,18 @@ hooks/       guard.sh (PreToolUse, exit 2, fail-closed without jq)
              fmt.sh · tests-green.sh (Stop, scoped to changed packages)
 settings/    settings.project.json / settings.user.json — permissions deny-by-default + hooks
 ci/          harness-evals.yml (invariant #6 as code) · agent-review.yml
+             plan-verify.yml (custom plan coherence checks) · hooks-test.yml (regression detection)
 templates/   CLAUDE.md, CLAUDE.local.md, surface-map, decisions, metrics,
              dispatch-matrix, spec, plan, eval-trace
 evals/       run.sh — executes "cmd:" checks from traces; exit≠0 on failure · traces/001-example.md
 scenarios/   greenfield · onboarding · existing-own — checklist overlays
 docs/        full step-by-step guides the kit was distilled from
+examples/    craftplan-spec.md, plan.md, retro.md — complete spec→plan→retro cycle (learning reference)
 extras/      harness-dashboard.jsx — interactive progress tracker (Claude artifact)
+tests/       hooks.test.sh — smoke tests for guard.sh patterns (refspec, .env, sh -c)
+build/       dashboard.sh — generates artifact-ready version for offline use
 install.sh   → project .claude/ (with settings and CI) or ~/.claude (--user)
+VERSION      Kit version for update detection
 ```
 
 ## Security model (two layers + a scanner)
