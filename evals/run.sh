@@ -50,7 +50,7 @@ for TRACE in "${TRACES[@]}"; do
   (cd "$WT" && ! git diff --quiet) || { OK=0; echo "  - FAIL: agent made no changes" >> "$RESULTS"; }
   while IFS= read -r CHECK; do
     (cd "$WT" && eval "$CHECK" >/dev/null 2>&1) || { OK=0; echo "  - FAIL check: $CHECK" >> "$RESULTS"; }
-  done < <(grep -oP '^\s*-\s*\[\s*\]\s*cmd:\s*\K.*' "$TRACE")
+  done < <(grep -E '^\s*-\s*\[\s*\]\s*cmd:' "$TRACE" | sed -E 's/.*cmd:[[:space:]]*//')
 
   if [ "$OK" = 1 ]; then echo "- $NAME: PASS" >> "$RESULTS"; PASS=$((PASS+1));
   else echo "- $NAME: FAIL" >> "$RESULTS"; fi
