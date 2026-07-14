@@ -1,4 +1,4 @@
-# harness-kit v1.2
+# harness-kit v1.2.1
 
 A shared harness core for three Claude Code working scenarios.
 Progression is gated by evidence (exit criteria per stage), not by a calendar.
@@ -75,8 +75,15 @@ Takes ~2 minutes to read; shows the full harness pattern in miniature.
 | Install level | .claude/ in repo | ~/.claude | .claude/ in repo |
 | Evals | grow via /retro | after legitimization | 20 traces from done tasks |
 
+## Changelog v1.2.1 (CRITICAL: false-green eval fix)
+- **CRITICAL**: eval-runner was using `--allowedTools fetch` (read-only)
+  - Agent could not implement changes; tests passed on *unchanged* code = silent failure
+  - Fixed: `--dangerously-skip-permissions` for isolated throwaway CI worktree
+  - Added: `! git diff --quiet` check to catch zero-change traces
+  - Upgraded: EVAL_LIMIT now auto-detects PR vs main via `GITHUB_EVENT_NAME`
+
 ## Changelog v1.2 (production hardening)
-- **eval-runner fix**: `--allowedTools fetch` + 5min timeout prevents CI hang on permission-blocked traces
+- **eval-runner fix**: 5min timeout prevents CI hang on permission-blocked traces
 - **EVAL_LIMIT**: sample mode (PR: 3 traces) vs full run (main branch) to reduce CI cost/time
 - **hooks-test.yml**: automated regression detection for guard.sh patterns (refspec, .env, wrappers)
 - **plan-verify.yml**: explicit CI workflow stub for custom plan coherence checks
