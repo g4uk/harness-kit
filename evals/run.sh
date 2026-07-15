@@ -46,6 +46,10 @@ for TRACE in "$REPO"/evals/traces/*.md; do
   # Empty-run detector: the agent MUST have changed something.
   "$EXEC" "$WT" "! git diff --quiet || ! git diff --cached --quiet || [ -n \"\$(git status --porcelain)\" ]" \
     || { OK=0; echo "  - FAIL: empty run (no diff)" >> "$RESULTS"; }
+
+  # Stage the agent's output: it isn't expected to commit, but checks that use
+  # git-aware tools (git grep, git diff --cached) must see its new/changed files.
+  "$EXEC" "$WT" "git add -A" >/dev/null 2>&1
   "$EXEC" "$WT" "$BASE_CHECK" >/dev/null 2>&1 || { OK=0; echo "  - FAIL: base check" >> "$RESULTS"; }
 
   # BSD/GNU-portable extraction of "- [ ] cmd: <shell>" checks (no grep -P)
