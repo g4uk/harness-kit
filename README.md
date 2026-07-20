@@ -104,8 +104,10 @@ skipped its own verification is a worse failure than one that errored visibly:
   already paid for: turn count, tool-call histogram, cost, duration. A trace that
   passes every `cmd:` check after 50 turns of thrashing is a quality signal the
   output check alone can't see — `EVAL_MAX_TURNS` (default 30) fails it.
-Per-trace and total run cost are written to the results file — the token economics
-of a trace are part of its record, not a number you have to go dig up separately.
+Per-trace trajectory/cost and PASS/FAIL stream to the console as each trace runs
+(`tee`d to the results file too) — nothing about a run is only visible after the
+fact by opening `evals/results/*.md`; that file exists for the durable record
+and CI logs, not as the only place to see what happened.
 
 ## Changelog v1.4 (trajectory eval + model routing)
 - **FIX**: `evals/run.sh` — `git grep`-based checks were failing on correct agent
@@ -114,8 +116,9 @@ of a trace are part of its record, not a number you have to go dig up separately
 - **Trajectory eval**: `docker/claude-run.sh` switched to `--output-format
   stream-json --verbose` so the agent's tool-call trajectory is captured, not
   just the final result. `evals/run.sh` reads it: per-trace turns/tools/cost/
-  duration in the results file, `EVAL_MAX_TURNS` (default 30) as a thrashing gate,
-  total run cost in the summary line.
+  duration streamed to the console (and `tee`d to the results file) as each
+  trace runs, `EVAL_MAX_TURNS` (default 30) as a thrashing gate, total run
+  cost in the summary line.
 - **agents/*.md**: explicit `model:` per role — routine/checklist-shaped work
   (test-writer, reviewer, doc-writer, researcher) routed to a cheaper/faster tier;
   implementer keeps the primary model for multi-step reasoning. EDIT_ME: tune per

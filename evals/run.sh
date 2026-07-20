@@ -15,7 +15,7 @@ fi
 
 RESULTS="$REPO/evals/results/$(date +%F-%H%M).md"
 mkdir -p "$REPO/evals/results"
-echo "# Eval run $(date -Iseconds)" > "$RESULTS"
+echo "# Eval run $(date -Iseconds)" | tee "$RESULTS"
 PASS=0; TOTAL=0
 
 # EDIT_ME: baseline check for every trace (runs inside the container)
@@ -57,7 +57,7 @@ for TRACE in "$REPO"/evals/traces/*.md; do
   DURATION_MS=$(jq -rs 'map(select(.type=="result")) | .[0].duration_ms // empty' "$JSON" 2>/dev/null)
   TOOLS=$(jq -rs '[.[] | select(.type=="assistant") | .message.content[]? | select(.type=="tool_use") | .name]
                    | group_by(.) | map("\(.[0])x\(length)") | join(", ")' "$JSON" 2>/dev/null)
-  echo "  - trajectory: turns=${TURNS:-?} cost=\$${COST:-?} duration=${DURATION_MS:-?}ms tools=[${TOOLS:-none}]" >> "$RESULTS"
+  echo "  - trajectory: turns=${TURNS:-?} cost=\$${COST:-?} duration=${DURATION_MS:-?}ms tools=[${TOOLS:-none}]" | tee -a "$RESULTS"
   case "${TURNS:-}" in
     ''|*[!0-9]*) : ;;
     *) TOTAL_COST=$(awk -v a="$TOTAL_COST" -v b="${COST:-0}" 'BEGIN{ print a + (b+0) }') ;;
@@ -66,30 +66,31 @@ for TRACE in "$REPO"/evals/traces/*.md; do
   OK=1
   # Empty-run detector: the agent MUST have changed something.
   "$EXEC" "$WT" "! git diff --quiet || ! git diff --cached --quiet || [ -n \"\$(git status --porcelain)\" ]" \
-    || { OK=0; echo "  - FAIL: empty run (no diff)" >> "$RESULTS"; }
+    || { OK=0; echo "  - FAIL: empty run (no diff)" | tee -a "$RESULTS"; }
 
   # Trajectory gate: too many turns on one trace means the agent was thrashing,
   # not converging — a real quality problem even if it stumbled onto a passing diff.
   case "${TURNS:-}" in
     ''|*[!0-9]*) ;;
-    *) [ "$TURNS" -gt "$MAX_TURNS" ] && { OK=0; echo "  - FAIL: trajectory exceeded ${MAX_TURNS} turns (${TURNS})" >> "$RESULTS"; } ;;
+    *) [ "$TURNS" -gt "$MAX_TURNS" ] && { OK=0; echo "  - FAIL: trajectory exceeded ${MAX_TURNS} turns (${TURNS})" | tee -a "$RESULTS"; } ;;
   esac
 
   # Stage the agent's output: it isn't expected to commit, but checks that use
   # git-aware tools (git grep, git diff --cached) must see its new/changed files.
   "$EXEC" "$WT" "git add -A" >/dev/null 2>&1
-  "$EXEC" "$WT" "$BASE_CHECK" >/dev/null 2>&1 || { OK=0; echo "  - FAIL: base check" >> "$RESULTS"; }
+  "$EXEC" "$WT" "$BASE_CHECK" >/dev/null 2>&1 || { OK=0; echo "  - FAIL: base check" | tee -a "$RESULTS"; }
 
   # BSD/GNU-portable extraction of "- [ ] cmd: <shell>" checks (no grep -P)
   while IFS= read -r CHECK; do
     [ -z "$CHECK" ] && continue
-    "$EXEC" "$WT" "$CHECK" >/dev/null 2>&1 || { OK=0; echo "  - FAIL check: $CHECK" >> "$RESULTS"; }
+    "$EXEC" "$WT" "$CHECK" >/dev/null 2>&1 || { OK=0; echo "  - FAIL check: $CHECK" | tee -a "$RESULTS"; }
   done < <(sed -n 's/^[[:space:]]*-[[:space:]]*\[[[:space:]]*\][[:space:]]*cmd:[[:space:]]*//p' "$TRACE")
 
-  if [ "$OK" = 1 ]; then echo "- $NAME: PASS" >> "$RESULTS"; PASS=$((PASS+1));
-  else echo "- $NAME: FAIL" >> "$RESULTS"; fi
+  if [ "$OK" = 1 ]; then echo "- $NAME: PASS" | tee -a "$RESULTS"; PASS=$((PASS+1));
+  else echo "- $NAME: FAIL" | tee -a "$RESULTS"; fi
   rm -rf "$WT"
 done
-echo "" >> "$RESULTS"; echo "**$PASS/$TOTAL** — total cost: \$${TOTAL_COST}" >> "$RESULTS"
+echo "" | tee -a "$RESULTS" >/dev/null
+echo "**$PASS/$TOTAL** — total cost: \$${TOTAL_COST}" | tee -a "$RESULTS"
 echo "Pass rate: $PASS/$TOTAL → $RESULTS"
 [ "$PASS" = "$TOTAL" ] && [ "$TOTAL" -gt 0 ]
