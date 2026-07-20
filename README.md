@@ -1,4 +1,4 @@
-# harness-kit v1.4
+# harness-kit v1.5
 
 A shared harness core for three Claude Code working scenarios.
 Progression is gated by evidence (exit criteria per stage), not by a calendar.
@@ -108,6 +108,19 @@ Per-trace trajectory/cost and PASS/FAIL stream to the console as each trace runs
 (`tee`d to the results file too) — nothing about a run is only visible after the
 fact by opening `evals/results/*.md`; that file exists for the durable record
 and CI logs, not as the only place to see what happened.
+
+## Changelog v1.5 (/onboard wizard)
+- **`/onboard`**: new command — interactive Stage 0 wizard that generates
+  `docs/decisions.md`, `CLAUDE.md`, `docs/metrics.md` through a Claude Code
+  conversation (multi-select which files, open-ended questions, no
+  prescribed tech choices) instead of hand-copying templates.
+- Self-contained: falls back to an inline structure when
+  `templates/*.template` isn't present in the target repo (`install.sh`
+  never copies `templates/` there — only `skills/agents/commands/hooks`).
+- Skips the overwrite prompt when an existing file is still raw/unfilled
+  (unresolved `{{...}}` placeholders, or an empty metrics table); only asks
+  before overwriting real, filled-in content.
+- `scenarios/greenfield.md` Stage 0 now points at `/onboard` as the fast path.
 
 ## Changelog v1.4 (trajectory eval + model routing)
 - **FIX**: `evals/run.sh` — `git grep`-based checks were failing on correct agent
