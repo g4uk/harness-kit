@@ -1,4 +1,4 @@
-# harness-kit v1.3
+# harness-kit v1.4
 
 A shared harness core for three Claude Code working scenarios.
 Progression is gated by evidence (exit criteria per stage), not by a calendar.
@@ -16,6 +16,7 @@ Progression is gated by evidence (exit criteria per stage), not by a calendar.
 ```
 commands/    /spec /plan /commit /verify /retro /feature
 agents/      researcher, test-writer, implementer, reviewer, doc-writer
+             — model: per-role tier (routine work cheaper, implementer keeps primary)
 skills/      code-review, testing, db-migrations, frontend      ← EDIT_ME for your stack
 hooks/       guard.sh (PreToolUse, exit 2, fail-closed without jq)
              secrets-scan.sh (PostToolUse: gitleaks or grep fallback)
@@ -25,7 +26,8 @@ ci/          harness-evals.yml (invariant #6 as code) · agent-review.yml
              plan-verify.yml (custom plan coherence checks) · hooks-test.yml (regression detection)
 templates/   CLAUDE.md, CLAUDE.local.md, surface-map, decisions, metrics,
              dispatch-matrix, spec, plan, eval-trace
-evals/       run.sh — Docker-only orchestrator (container policy) · traces/001-example.md
+evals/       run.sh — Docker-only orchestrator; output eval (checks) + trajectory eval
+             (turns/tools) + cost from the JSON transcript · traces/001-example.md
 scenarios/   greenfield · onboarding · existing-own — checklist overlays
 docs/        full step-by-step guides the kit was distilled from
 examples/    craftplan-spec.md, plan.md, retro.md — complete spec→plan→retro cycle (learning reference)
@@ -78,6 +80,49 @@ Takes ~2 minutes to read; shows the full harness pattern in miniature.
 | Gates | commit #1 | user-level immediately; in repo — after the trust gate | quality-gates stage |
 | Install level | .claude/ in repo | ~/.claude | .claude/ in repo |
 | Evals | grow via /retro | after legitimization | 20 traces from done tasks |
+
+## Where this sits on the vibe coding ↔ agentic engineering spectrum
+The differentiator between the two isn't whether an agent is used — it's how the
+output gets verified. Casual prompting with "does it seem to work" is one end;
+formal specs + automated evals + CI gates is the other. This kit is built for the
+disciplined end, but not every task on a project needs to sit there:
+- **Prototypes, throwaway scripts, exploring an unfamiliar API** — vibe coding is the
+  right speed. Don't route these through /spec → /plan → evals; that's friction
+  without payoff for code nobody will run twice.
+- **Anything merging into a shared branch** — the kit's gates apply: spec before
+  code (invariant #1), hooks over prompts for safety (invariant #2), green evals
+  before `.claude/**` or `CLAUDE.md` changes ship (invariant #6).
+Keep that boundary explicit per task, not implicit per developer — a team that
+blurs it ships prototypes to production by accident.
+
+## Evals: what gets verified
+`evals/run.sh` checks two different things per trace, because a fluent diff that
+skipped its own verification is a worse failure than one that errored visibly:
+- **Output eval** — the `cmd:` checks in a trace file, run against the agent's
+  final diff (does it compile, does the expected line exist, is scope respected).
+- **Trajectory eval** — read from the agent's own JSON transcript, which the run
+  already paid for: turn count, tool-call histogram, cost, duration. A trace that
+  passes every `cmd:` check after 50 turns of thrashing is a quality signal the
+  output check alone can't see — `EVAL_MAX_TURNS` (default 30) fails it.
+Per-trace and total run cost are written to the results file — the token economics
+of a trace are part of its record, not a number you have to go dig up separately.
+
+## Changelog v1.4 (trajectory eval + model routing)
+- **FIX**: `evals/run.sh` — `git grep`-based checks were failing on correct agent
+  output because the agent doesn't commit; now `git add -A` after the run so
+  git-aware checks see untracked new files.
+- **Trajectory eval**: `docker/claude-run.sh` switched to `--output-format
+  stream-json --verbose` so the agent's tool-call trajectory is captured, not
+  just the final result. `evals/run.sh` reads it: per-trace turns/tools/cost/
+  duration in the results file, `EVAL_MAX_TURNS` (default 30) as a thrashing gate,
+  total run cost in the summary line.
+- **agents/*.md**: explicit `model:` per role — routine/checklist-shaped work
+  (test-writer, reviewer, doc-writer, researcher) routed to a cheaper/faster tier;
+  implementer keeps the primary model for multi-step reasoning. EDIT_ME: tune per
+  project budget and stack.
+- **README**: new "vibe coding ↔ agentic engineering" section — makes explicit
+  which work should skip the harness (prototypes) vs. which must go through it
+  (anything merging to a shared branch).
 
 ## Changelog v1.3 (Docker-only project policy)
 - **Docker container boundary**: all headless runs (agent + checks/tests) execute in harness-runner image — no exceptions.

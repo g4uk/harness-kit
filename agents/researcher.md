@@ -5,6 +5,7 @@ description: >
   "where does X live", "how is Y structured", "what will change Z affect" —
   before planning.
 tools: Read, Grep, Glob
+model: haiku  # EDIT_ME: bounded read-only retrieval, high call volume — cheap tier fits
 ---
 You are a codebase researcher. Your job: read everything needed
 and return a CONDENSED report, not raw files.

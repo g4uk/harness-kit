@@ -26,6 +26,13 @@ BASE_BRANCH=${BASE_BRANCH:-$(git rev-parse --abbrev-ref HEAD)}
 
 # EVAL_LIMIT: run only the first N traces (PR sampling). Unset/0 = all.
 LIMIT="${EVAL_LIMIT:-0}"
+# EVAL_MAX_TURNS: trajectory gate — an agent thrashing past this many turns on a
+# single trace is a quality signal in itself, independent of whether it eventually
+# produced a passing diff. Output eval alone would miss this (mid-2026 whitepaper on
+# agentic engineering: "a fluent output that skipped its verification steps is a more
+# dangerous failure than one with a visible error" — trajectory eval catches that).
+MAX_TURNS="${EVAL_MAX_TURNS:-30}"
+TOTAL_COST=0
 
 for TRACE in "$REPO"/evals/traces/*.md; do
   [ -e "$TRACE" ] || continue
@@ -42,10 +49,31 @@ for TRACE in "$REPO"/evals/traces/*.md; do
   PROMPT=$(awk '/^## Prompt/{f=1;next}/^## /{f=0}f' "$TRACE")
   "$RUN" "$WT" "$PROMPT" "/tmp/eval-$NAME.json" || true
 
+  # Trajectory + cost: the JSON transcript (stream-json, one object per line) has
+  # already been paid for by the run above — read it instead of throwing it away.
+  JSON="/tmp/eval-$NAME.json"
+  TURNS=$(jq -rs 'map(select(.type=="result")) | .[0].num_turns // empty' "$JSON" 2>/dev/null)
+  COST=$(jq -rs 'map(select(.type=="result")) | .[0].total_cost_usd // empty' "$JSON" 2>/dev/null)
+  DURATION_MS=$(jq -rs 'map(select(.type=="result")) | .[0].duration_ms // empty' "$JSON" 2>/dev/null)
+  TOOLS=$(jq -rs '[.[] | select(.type=="assistant") | .message.content[]? | select(.type=="tool_use") | .name]
+                   | group_by(.) | map("\(.[0])x\(length)") | join(", ")' "$JSON" 2>/dev/null)
+  echo "  - trajectory: turns=${TURNS:-?} cost=\$${COST:-?} duration=${DURATION_MS:-?}ms tools=[${TOOLS:-none}]" >> "$RESULTS"
+  case "${TURNS:-}" in
+    ''|*[!0-9]*) : ;;
+    *) TOTAL_COST=$(awk -v a="$TOTAL_COST" -v b="${COST:-0}" 'BEGIN{ print a + (b+0) }') ;;
+  esac
+
   OK=1
   # Empty-run detector: the agent MUST have changed something.
   "$EXEC" "$WT" "! git diff --quiet || ! git diff --cached --quiet || [ -n \"\$(git status --porcelain)\" ]" \
     || { OK=0; echo "  - FAIL: empty run (no diff)" >> "$RESULTS"; }
+
+  # Trajectory gate: too many turns on one trace means the agent was thrashing,
+  # not converging — a real quality problem even if it stumbled onto a passing diff.
+  case "${TURNS:-}" in
+    ''|*[!0-9]*) ;;
+    *) [ "$TURNS" -gt "$MAX_TURNS" ] && { OK=0; echo "  - FAIL: trajectory exceeded ${MAX_TURNS} turns (${TURNS})" >> "$RESULTS"; } ;;
+  esac
 
   # Stage the agent's output: it isn't expected to commit, but checks that use
   # git-aware tools (git grep, git diff --cached) must see its new/changed files.
@@ -62,6 +90,6 @@ for TRACE in "$REPO"/evals/traces/*.md; do
   else echo "- $NAME: FAIL" >> "$RESULTS"; fi
   rm -rf "$WT"
 done
-echo "" >> "$RESULTS"; echo "**$PASS/$TOTAL**" >> "$RESULTS"
+echo "" >> "$RESULTS"; echo "**$PASS/$TOTAL** — total cost: \$${TOTAL_COST}" >> "$RESULTS"
 echo "Pass rate: $PASS/$TOTAL → $RESULTS"
 [ "$PASS" = "$TOTAL" ] && [ "$TOTAL" -gt 0 ]

@@ -2,6 +2,7 @@
 name: implementer
 description: Implements the approved plan.md step by step until tests are green.
 tools: Read, Grep, Glob, Write, Edit, Bash
+model: inherit  # EDIT_ME: multi-step reasoning over the plan — keep the primary model
 ---
 You implement specs/<feature>/plan.md step by step.
 Rules:

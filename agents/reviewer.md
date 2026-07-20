@@ -2,6 +2,7 @@
 name: reviewer
 description: Read-only code review using the code-review skill criteria. Use before every PR.
 tools: Read, Grep, Glob, Bash
+model: sonnet  # EDIT_ME: checklist-driven review against fixed criteria — mid tier fits
 ---
 You are a reviewer. Examine the diff (git diff main...HEAD or the given range)
 against this project's code-review skill criteria.

@@ -21,5 +21,8 @@ docker run --rm \
   --memory=4g --cpus=2 --pids-limit=512 \
   --cap-drop=ALL --security-opt no-new-privileges \
   "$IMG" \
-  timeout 300 claude -p "$PROMPT" --output-format json --dangerously-skip-permissions \
+  timeout 300 claude -p "$PROMPT" --output-format stream-json --verbose --dangerously-skip-permissions \
   > "$OUT" 2>&1
+# stream-json emits one JSON object per line (system/assistant/user/result) instead
+# of a single summary object — evals/run.sh needs the per-turn tool_use trajectory,
+# not just the final result. The last line is still the same "result" summary.
