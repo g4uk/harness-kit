@@ -5,10 +5,14 @@ Stages advance on **exit criteria**, not the calendar — move on when the evide
 whether that takes a day or a month.
 
 ## Stage 0 — Foundation (before writing product code)
+- [ ] install.sh of this kit → .claude/; hooks active from commit #1
 - [ ] docs/decisions.md from templates/decisions.md.template — every decision = a future CLAUDE.md line
 - [ ] CLAUDE.md from templates/CLAUDE.md.template — derived from decisions, including the YAGNI gate
-- [ ] install.sh of this kit → .claude/; hooks active from commit #1
 - [ ] docs/metrics.md from the template
+
+Run `/onboard` after install to generate the three files above interactively
+(it asks which to create, then walks decisions/CLAUDE.md/metrics questions) —
+or write them by hand from the templates if you prefer.
 
 **Exit:** harness committed before any product code; gate smoke test passes (guard exit=2).
 

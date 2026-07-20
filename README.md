@@ -14,7 +14,7 @@ Progression is gated by evidence (exit criteria per stage), not by a calendar.
 
 ## Structure
 ```
-commands/    /spec /plan /commit /verify /retro /feature
+commands/    /spec /plan /commit /verify /retro /feature /onboard
 agents/      researcher, test-writer, implementer, reviewer, doc-writer
              — model: per-role tier (routine work cheaper, implementer keeps primary)
 skills/      code-review, testing, db-migrations, frontend      ← EDIT_ME for your stack
