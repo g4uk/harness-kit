@@ -1,6 +1,15 @@
 #!/bin/bash
-# Eval runner. POLICY: every project-touching execution (agent AND checks)
-# happens inside the harness-runner Docker container. This script only orchestrates.
+# Eval runner. POLICY: the agent's own run ALWAYS happens inside the
+# harness-runner Docker container — no exceptions, no environment check.
+# Checks (base check + trace cmd:, human-approved via /retro before they're
+# ever committed) run in that same sandbox by default, but directly on the
+# host when HARNESS_EVAL_CHECKS_HOST=1 (see run_check below) — for a CI
+# environment that's already a fresh, isolated, single-job VM with its own
+# native Docker daemon, where nesting harness-runner around checks only
+# breaks docker/docker-compose checks for no safety benefit (harness-runner
+# itself has no docker CLI/socket). This script has no opinion on which CI
+# vendor sets that flag — see ci/harness-evals.yml for the GitHub wiring.
+# This script only orchestrates.
 #
 # HARNESS_ALLOW_HOST=1 is an escape hatch for debugging — never for real runs.
 set -u
@@ -12,6 +21,27 @@ EXEC="$KIT_DIR/docker/exec.sh"
 if [ "${HARNESS_ALLOW_HOST:-}" != "1" ]; then
   command -v docker >/dev/null || { echo "FATAL: docker required (policy: project runs only in Docker)."; exit 1; }
 fi
+
+# Checks (base check + trace cmd:) are human-approved commands (via /retro's
+# approval gate before they're ever committed) — not agent-authored arbitrary
+# code. The agent's own run ($RUN, above) ALWAYS stays in the harness-runner
+# sandbox regardless of environment; that boundary is unrelated to this one.
+# HARNESS_EVAL_CHECKS_HOST=1 is an explicit opt-in for a CI environment that's
+# already a fresh, single-job, isolated VM with its own native Docker daemon —
+# nesting harness-runner around checks there only breaks anything needing
+# docker/docker compose (harness-runner deliberately ships no docker
+# CLI/socket; that's the agent sandbox's edge, not meant to be punched
+# through just to make checks work). Unset by default: stay fully sandboxed
+# — a plain dev machine is shared/persistent, not a throwaway CI VM, and this
+# script doesn't guess vendor/environment on its own.
+run_check() {
+  local dir="$1"; shift
+  if [ "${HARNESS_EVAL_CHECKS_HOST:-}" = "1" ]; then
+    ( cd "$dir" && bash -c "$*" )
+  else
+    "$EXEC" "$dir" "$@"
+  fi
+}
 
 RESULTS="$REPO/evals/results/$(date +%F-%H%M).md"
 mkdir -p "$REPO/evals/results"
@@ -93,7 +123,7 @@ for TRACE in "$REPO"/evals/traces/*.md; do
   # not whether anything changed. Making this a hard FAIL meant every trace
   # became permanently unpassable the moment its feature merged (caught live
   # on kumite-analyzer's first accumulated-trace run: 0/2, both empty-run).
-  "$EXEC" "$WT" "! git diff --quiet || ! git diff --cached --quiet || [ -n \"\$(git status --porcelain)\" ]" \
+  run_check "$WT" "! git diff --quiet || ! git diff --cached --quiet || [ -n \"\$(git status --porcelain)\" ]" \
     || echo "  - NOTE: no diff (feature may already be present on $BASE_BRANCH)" | tee -a "$RESULTS"
 
   # Trajectory gate: too many turns on one trace means the agent was thrashing,
@@ -105,13 +135,13 @@ for TRACE in "$REPO"/evals/traces/*.md; do
 
   # Stage the agent's output: it isn't expected to commit, but checks that use
   # git-aware tools (git grep, git diff --cached) must see its new/changed files.
-  "$EXEC" "$WT" "git add -A" >/dev/null 2>&1
-  "$EXEC" "$WT" "$BASE_CHECK" >/dev/null 2>&1 || { OK=0; echo "  - FAIL: base check" | tee -a "$RESULTS"; }
+  run_check "$WT" "git add -A" >/dev/null 2>&1
+  run_check "$WT" "$BASE_CHECK" >/dev/null 2>&1 || { OK=0; echo "  - FAIL: base check" | tee -a "$RESULTS"; }
 
   # BSD/GNU-portable extraction of "- [ ] cmd: <shell>" checks (no grep -P)
   while IFS= read -r CHECK; do
     [ -z "$CHECK" ] && continue
-    "$EXEC" "$WT" "$CHECK" >/dev/null 2>&1 || { OK=0; echo "  - FAIL check: $CHECK" | tee -a "$RESULTS"; }
+    run_check "$WT" "$CHECK" >/dev/null 2>&1 || { OK=0; echo "  - FAIL check: $CHECK" | tee -a "$RESULTS"; }
   done < <(sed -n 's/^[[:space:]]*-[[:space:]]*\[[[:space:]]*\][[:space:]]*cmd:[[:space:]]*//p' "$TRACE")
 
   if [ "$OK" = 1 ]; then echo "- $NAME: PASS" | tee -a "$RESULTS"; PASS=$((PASS+1));

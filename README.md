@@ -1,10 +1,10 @@
-# harness-kit v1.6
+# harness-kit v1.7
 
 A shared harness core for three Claude Code working scenarios.
 Progression is gated by evidence (exit criteria per stage), not by a calendar.
 
 ## Requirements
-- **docker** (mandatory for eval runs). Policy: every project-touching execution (agent + checks) runs in the harness-runner sandbox.
+- **docker** (mandatory for eval runs). Policy: the agent's own run always executes in the harness-runner sandbox; checks (base check + trace `cmd:`, human-approved via `/retro`) do too by default, but run directly on the host when `HARNESS_EVAL_CHECKS_HOST=1` — set by `ci/harness-evals.yml` for GitHub Actions (already an isolated, single-job VM with a native Docker daemon), opt-in for any other CI. See `evals/run.sh`.
 - **bash** + **jq** (for guard.sh and local orchestration).
   - macOS: `brew install jq docker`
   - Linux: `apt install jq` + install Docker from docker.io
@@ -40,8 +40,11 @@ VERSION      Kit version for update detection
 ```
 
 ## Security model (three layers)
-0. **container boundary** — all headless runs (agent + checks) happen in harness-runner sandbox.
-   Non-root user, dropped capabilities, resource limits, throwaway mounts.
+0. **container boundary** — the agent's own headless run always happens in the harness-runner
+   sandbox (non-root user, dropped capabilities, resource limits, throwaway mounts). Checks
+   (human-approved via `/retro`, not agent-authored) do too by default; `HARNESS_EVAL_CHECKS_HOST=1`
+   (set for GitHub Actions in `ci/harness-evals.yml`) runs them directly on an already-isolated
+   CI runner instead — see `evals/run.sh`.
 1. **permissions in settings.json — deny-by-default.** Only the allow-list is permitted.
    Primary layer for interactive sessions on the host: can't be bypassed by rephrasing.
 2. **guard.sh** — readable block explanations + patterns beyond the permissions syntax
@@ -108,6 +111,29 @@ Per-trace trajectory/cost and PASS/FAIL stream to the console as each trace runs
 (`tee`d to the results file too) — nothing about a run is only visible after the
 fact by opening `evals/results/*.md`; that file exists for the durable record
 and CI logs, not as the only place to see what happened.
+
+## Changelog v1.7 (evals: opt-in un-sandboxed checks via HARNESS_EVAL_CHECKS_HOST)
+- **Resolves the docker-in-sandbox limitation** (open since v1.6.2/v1.6.3):
+  `docker compose`-based `cmd:` checks could never pass, because
+  `harness-runner` deliberately ships no docker CLI/socket. Root-cause
+  decision: don't loosen the agent's sandbox (no socket mount, no DinD) —
+  split trust instead. The agent's own run stays fully sandboxed everywhere,
+  unconditionally. Checks (base check + trace `cmd:`) are human-approved
+  commands via `/retro`'s "show me, don't commit yourself" gate, not
+  agent-authored code — a different trust level.
+- `evals/run.sh` gained a `run_check()` dispatcher and a new
+  `HARNESS_EVAL_CHECKS_HOST=1` env var: unset (default), checks run in
+  `harness-runner` same as the agent; set, they run directly on the host.
+  The script itself has **no CI-vendor opinion** — it just reads the flag.
+  `ci/harness-evals.yml` sets it for GitHub Actions specifically (already a
+  fresh, single-job, isolated VM with a native Docker daemon, so
+  `docker compose` actually works there); any other CI with the same
+  property can opt in the same way. `docker/exec.sh` is unchanged — still
+  the default path. Verified the routing directly: a
+  `cmd: command -v docker` check fails under normal invocation (no docker in
+  the sandbox) and passes under `HARNESS_EVAL_CHECKS_HOST=1` (runs on host).
+- Docs updated to stop claiming checks are unconditionally sandboxed
+  (README's Requirements + Security model, `ci/harness-evals.yml` header).
 
 ## Changelog v1.6.7 (retro.md: prevent malformed/stateful cmd: checks)
 - **FIX**: `/retro` generated a trace (`003-user-auth.md` on kumite-analyzer)
