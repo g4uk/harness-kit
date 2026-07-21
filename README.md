@@ -109,6 +109,15 @@ Per-trace trajectory/cost and PASS/FAIL stream to the console as each trace runs
 fact by opening `evals/results/*.md`; that file exists for the durable record
 and CI logs, not as the only place to see what happened.
 
+## Changelog v1.6.4 (ci/harness-evals.yml: push trigger missing paths filter)
+- **FIX**: the `push: branches: [main]` trigger had no `paths:` filter, unlike
+  its own `pull_request` trigger (and unlike `hooks-test.yml`, which had it
+  right). Invariant #6 is "a change to `.claude/**`/`CLAUDE.md` doesn't merge
+  without green evals" — but with no path filter, `harness-evals` ran (and
+  could fail) on *every* push to main, including pure product-code commits
+  that never touch `.claude/**`/`CLAUDE.md`/`evals/**`/`docker/**`. Now the
+  `push` trigger has the same `paths:` list as `pull_request`.
+
 ## Changelog v1.6.3 (install.sh: stop shipping the CraftPlan example trace)
 - **FIX**: `install.sh` no longer copies `evals/traces/001-example.md` into
   new projects. It's a format reference for the fictional CraftPlan project
