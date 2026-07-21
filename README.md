@@ -109,6 +109,18 @@ Per-trace trajectory/cost and PASS/FAIL stream to the console as each trace runs
 fact by opening `evals/results/*.md`; that file exists for the durable record
 and CI logs, not as the only place to see what happened.
 
+## Changelog v1.6.7 (retro.md: prevent malformed/stateful cmd: checks)
+- **FIX**: `/retro` generated a trace (`003-user-auth.md` on kumite-analyzer)
+  with two real bugs — a human-readable note baked directly into a `cmd:`
+  value (`go test ./... -count=1 (set TEST_DSN to...)`, a guaranteed bash
+  syntax error) and three checks assuming state shared across separate
+  `cmd:` lines (`docker compose up` in one, bare `curl` against it in the
+  next) — but each `cmd:` runs in its own throwaway container
+  (`docker/exec.sh`), so nothing persists between them.
+- `commands/retro.md` and `templates/eval-trace.md.template` now say this
+  explicitly: chain multi-step verification in ONE `cmd:` with `&&`, and
+  never put a note inline in the command — use a `(manual)` line instead.
+
 ## Changelog v1.6.6 (evals/run.sh: surface is_error even on a parseable result)
 - **FIX**: the v1.5.1 raw-output diagnostic only fires when `num_turns` is
   unparseable (a fully-broken JSON transcript). A result CAN be perfectly

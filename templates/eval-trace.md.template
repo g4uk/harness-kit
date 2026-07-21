@@ -2,6 +2,10 @@
 ## Prompt
 {{the task in one paragraph, as a user would phrase it}}
 ## Checks
+<!-- Each cmd: runs standalone in its own throwaway container — no shared
+     state between lines. Multi-step verification (start something, then hit
+     it) goes in ONE cmd: chained with &&. cmd: is executed verbatim as the
+     shell command — no inline human notes; use a (manual) line for those. -->
 - [ ] cmd: go test ./internal/{{module}}/
 - [ ] cmd: ! git grep -nE '{{forbidden pattern}}' -- '{{path}}'
 - [ ] cmd: git grep -q '{{expected line}}' -- '{{path}}'
