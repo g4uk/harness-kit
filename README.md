@@ -109,6 +109,14 @@ Per-trace trajectory/cost and PASS/FAIL stream to the console as each trace runs
 fact by opening `evals/results/*.md`; that file exists for the durable record
 and CI logs, not as the only place to see what happened.
 
+## Changelog v1.5.1 (CRITICAL: install.sh never shipped docker/)
+- **FIX**: `install.sh` copies `ci/harness-evals.yml` into every installed
+  project, and that workflow runs `docker build -t harness-runner:latest
+  docker/` — but `install.sh` never copied the `docker/` directory itself.
+  Every fresh install's first push broke CI with `path "docker/" not found`.
+  Now `docker/{Dockerfile,claude-run.sh,exec.sh}` is copied on both fresh
+  install and `--update` (executable bits preserved on the two scripts).
+
 ## Changelog v1.5 (/onboard wizard)
 - **`/onboard`**: new command — interactive Stage 0 wizard that generates
   `docs/decisions.md`, `CLAUDE.md`, `docs/metrics.md` through a Claude Code
