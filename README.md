@@ -1,4 +1,4 @@
-# harness-kit v1.5
+# harness-kit v1.6
 
 A shared harness core for three Claude Code working scenarios.
 Progression is gated by evidence (exit criteria per stage), not by a calendar.
@@ -14,7 +14,7 @@ Progression is gated by evidence (exit criteria per stage), not by a calendar.
 
 ## Structure
 ```
-commands/    /spec /plan /commit /verify /retro /feature /onboard
+commands/    /spec /plan /commit /verify /retro /feature /onboard /log-metrics
 agents/      researcher, test-writer, implementer, reviewer, doc-writer
              — model: per-role tier (routine work cheaper, implementer keeps primary)
 skills/      code-review, testing, db-migrations, frontend      ← EDIT_ME for your stack
@@ -108,6 +108,13 @@ Per-trace trajectory/cost and PASS/FAIL stream to the console as each trace runs
 (`tee`d to the results file too) — nothing about a run is only visible after the
 fact by opening `evals/results/*.md`; that file exists for the durable record
 and CI logs, not as the only place to see what happened.
+
+## Changelog v1.6 (/log-metrics)
+- **`/log-metrics`**: new command — appends a row to `docs/metrics.md` per
+  Invariant #4, but only asks for what actually needs human judgment
+  (First-pass?, Human min, Note). Tokens/$/duration come from `/cost` or
+  `/usage` output already in the conversation (or asks you to run it once);
+  LOC diff is computed via `git diff --shortstat`, no manual math.
 
 ## Changelog v1.5.2 (install.sh: clarify ANTHROPIC_API_KEY must be a repo secret)
 - **FIX**: `install.sh`'s next-steps hint just said "add secrets.ANTHROPIC_API_KEY"
