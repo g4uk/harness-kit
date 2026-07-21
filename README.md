@@ -109,6 +109,26 @@ Per-trace trajectory/cost and PASS/FAIL stream to the console as each trace runs
 fact by opening `evals/results/*.md`; that file exists for the durable record
 and CI logs, not as the only place to see what happened.
 
+## Changelog v1.6.2 (CRITICAL: empty-run was a permanent fail for merged traces)
+- **FIX**: `evals/run.sh` cloned the current tip of `$BASE_BRANCH` for every
+  trace, always — so once a trace's feature was merged, replaying its own
+  "implement X" prompt against a repo that already has X produces no diff,
+  by design. The old `! git diff --quiet` gate treated that as a hard
+  `FAIL: empty run`, meaning **every accumulated trace became permanently
+  unpassable the moment it merged** — Stage 3's "eval baseline" was
+  unreachable by construction. Caught live on kumite-analyzer's first
+  multi-trace run (0/2, both flagged empty-run, one of them its own
+  already-shipped walking-skeleton).
+- No-diff is now logged as `NOTE`, not `FAIL` — pass/fail is decided purely
+  by whether the base check and the trace's own `cmd:` checks pass, which is
+  what actually indicates whether the codebase satisfies the trace.
+- **Known follow-up (not fixed here):** `harness-runner` has no `docker`/
+  `docker compose` CLI and no socket access, so `cmd:` checks that spin up a
+  real Docker Compose stack (e.g. a project's own integration checks) cannot
+  execute inside the sandbox regardless of this fix. Deferred — fixing it
+  means loosening the sandbox (socket mount or DinD), a bigger call than a
+  logic fix.
+
 ## Changelog v1.6.1 (greenfield docs: lessons from a real first run)
 - **`scenarios/greenfield.md` + `docs/greenfield-harness.md`**: four gotchas
   documented after running a real greenfield project (kumite-analyzer)
