@@ -109,6 +109,17 @@ Per-trace trajectory/cost and PASS/FAIL stream to the console as each trace runs
 fact by opening `evals/results/*.md`; that file exists for the durable record
 and CI logs, not as the only place to see what happened.
 
+## Changelog v1.5.2 (install.sh: clarify ANTHROPIC_API_KEY must be a repo secret)
+- **FIX**: `install.sh`'s next-steps hint just said "add secrets.ANTHROPIC_API_KEY"
+  — an Environment secret (or an org secret not shared with the repo) satisfies
+  that instruction but is invisible to `harness-evals`/`agent-review`, since
+  neither workflow declares `environment:`. The container then reports
+  `apiKeySource:none` with no error, only visible via the raw-output diagnostic
+  from v1.5.1. Hint now says REPOSITORY secret explicitly and why.
+- **evals/run.sh**: surfaces the raw agent output when trajectory parsing
+  fails, so a silent auth/config failure is diagnosable from the CI log
+  instead of just `turns=? cost=?`.
+
 ## Changelog v1.5.1 (CRITICAL: install.sh never shipped docker/)
 - **FIX**: `install.sh` copies `ci/harness-evals.yml` into every installed
   project, and that workflow runs `docker build -t harness-runner:latest

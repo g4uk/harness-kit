@@ -116,7 +116,11 @@ if [ "$UPDATE_MODE" = false ]; then
   echo "   Next:"
   echo "   1. CLAUDE.md: fill in the {{...}}"
   echo "   2. EDIT_ME: skills/ (stack), hooks/tests-green.sh (test command), settings.json (allow-list)"
-  echo "   3. CI: add secrets.ANTHROPIC_API_KEY for harness-evals and agent-review"
+  echo "   3. CI: add ANTHROPIC_API_KEY as a REPOSITORY secret (Settings > Secrets and"
+  echo "      variables > Actions > Repository secrets) for harness-evals + agent-review."
+  echo "      NOT an Environment secret — these workflows don't declare environment:,"
+  echo "      so an environment-scoped (or org-scoped-but-unshared) secret silently"
+  echo "      yields apiKeySource:none in the container, not an error."
   echo "   4. Smoke test: echo '{\"tool_input\":{\"command\":\"git push -f\"}}' | .claude/hooks/guard.sh; echo exit=\$?"
   echo "   5. Scenario: scenarios/{greenfield,onboarding,existing-own}.md"
 fi
