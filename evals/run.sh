@@ -72,6 +72,20 @@ for TRACE in "$REPO"/evals/traces/*.md; do
     echo | tee -a "$RESULTS"
   fi
 
+  # A PARSEABLE result can still be an error (auth failure, rate limit, etc.)
+  # — e.g. "is_error":true, num_turns:1, result:"Not logged in · Please
+  # run /login". That's a completely different problem than a legitimate
+  # empty diff (a merged feature with nothing left to do), but downstream
+  # they look identical: no diff, base check fails on missing code. Without
+  # this, an auth failure reads as a code/test problem, sending debugging
+  # down the wrong layer entirely (caught running this repo's own
+  # tests/runner-smoke.sh without ANTHROPIC_API_KEY set locally).
+  IS_ERROR=$(jq -rs 'map(select(.type=="result")) | .[0].is_error // false' "$JSON" 2>/dev/null)
+  if [ "$IS_ERROR" = "true" ]; then
+    RESULT_TEXT=$(jq -rs 'map(select(.type=="result")) | .[0].result // empty' "$JSON" 2>/dev/null)
+    echo "  - AGENT ERROR (is_error=true, not a code/test failure): ${RESULT_TEXT:-<no message>}" | tee -a "$RESULTS"
+  fi
+
   OK=1
   # No-diff note: informational only, NOT an automatic fail. A trace whose
   # feature has already merged into $BASE_BRANCH is EXPECTED to produce no

@@ -109,6 +109,19 @@ Per-trace trajectory/cost and PASS/FAIL stream to the console as each trace runs
 fact by opening `evals/results/*.md`; that file exists for the durable record
 and CI logs, not as the only place to see what happened.
 
+## Changelog v1.6.6 (evals/run.sh: surface is_error even on a parseable result)
+- **FIX**: the v1.5.1 raw-output diagnostic only fires when `num_turns` is
+  unparseable (a fully-broken JSON transcript). A result CAN be perfectly
+  parseable and still be an error — e.g. an auth failure returns
+  `{"is_error":true,"num_turns":1,"result":"Not logged in · Please run
+  /login"}`. That looked identical downstream to a legitimate empty diff
+  (merged feature, nothing left to do): `NOTE: no diff` + failed checks on
+  missing code, with zero indication the agent never actually ran. Caught
+  running this repo's own `tests/runner-smoke.sh` locally without
+  `ANTHROPIC_API_KEY` set. Now `is_error:true` prints an explicit
+  `AGENT ERROR` line with the result text, regardless of whether `num_turns`
+  parsed.
+
 ## Changelog v1.6.5 (ci/agent-review.yml: missing id-token permission)
 - **FIX**: `anthropics/claude-code-action@v1` requests an OIDC token as part
   of its own auth setup, but the job's `permissions` block only granted
