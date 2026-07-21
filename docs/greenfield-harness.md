@@ -112,6 +112,10 @@ First commit: `chore: project skeleton + harness (CLAUDE.md, hooks, commands)`.
 **The harness is committed before the first line of product code** — that's harness-first.
 
 **Exit:** harness committed before product code; the gate smoke test passes (guard exit=2).
+Run the smoke test by asking Claude itself to run the forbidden command — guard.sh is a
+PreToolUse hook, it only fires on Bash calls the agent makes through its own tool. Typing
+the same command yourself in a terminal never touches it; that's not a bypass, it's just
+a different layer (the kit protects agent actions, not your own hands on the keyboard).
 
 ---
 
@@ -141,6 +145,23 @@ ever exists without a plan).
 Product value: zero. But: the deploy pipeline works, migrations run, the tenant pattern is
 laid down, CI is green, trace #0 sits in evals/. Every later feature is "adding meat to the
 skeleton", not "assembling the system".
+
+### 1.4 — Two gotchas on the first `harness-evals` CI run
+
+**Secret scope:** `ANTHROPIC_API_KEY` must live in the repo's **Repository secrets**
+(Settings > Secrets and variables > Actions), not an Environment secret and not an org
+secret that isn't shared with this repo. Neither `harness-evals.yml` nor `agent-review.yml`
+declares `environment:`, so anything scoped there is invisible to the job — the container
+reports `apiKeySource:none` with no error, not a loud failure. `evals/run.sh` surfaces the
+raw agent output on an unparseable trajectory (v1.5.1+) specifically so this is diagnosable
+from the CI log instead of a bare `turns=? cost=?`.
+
+**The shipped example trace fails on purpose (for now).** `evals/traces/001-example.md` is
+CraftPlan-specific (Go, `internal/api`, `git grep company_id`) — it cannot pass against any
+other project's repo. The first `harness-evals` run on a fresh install will be red because
+of this trace alone, even with the API key correctly configured. That's expected, not a
+signal something's broken: it's the only trace until `/retro` on feature #0 adds a real one
+for this project — see 2.3 below.
 
 ---
 
@@ -179,6 +200,14 @@ cases, not theory.
 metrics.md from feature #0. On greenfield add a **LOC diff** column — watch the ratio of
 $/feature to feature size. If cost grows feature-over-feature at constant size — the
 context is silting up, CLAUDE.md has sprawled, or the YAGNI gate is leaking.
+
+Use `/log-metrics` to fill the row: it reads tokens/$/duration from `/cost` (`/usage` is
+the same command) already in the conversation, computes LOC diff via `git diff --shortstat`,
+and only asks you for First-pass?/Human min/Note. For this to give a clean per-feature
+number, `/clear` between features and check `claude --version` first — `/clear` only resets
+the cost counter on Claude Code CLI **v2.1.211+**; on older versions cost accumulates across
+`/clear` for the life of the process, so consecutive features' $ figures bleed into each
+other.
 
 **Exit:** 3-5 features merged through the full cycle; at least one skill and one template
 improvement produced by /retro; cost per feature known, not guessed.

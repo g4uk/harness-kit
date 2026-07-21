@@ -109,6 +109,22 @@ Per-trace trajectory/cost and PASS/FAIL stream to the console as each trace runs
 fact by opening `evals/results/*.md`; that file exists for the durable record
 and CI logs, not as the only place to see what happened.
 
+## Changelog v1.6.1 (greenfield docs: lessons from a real first run)
+- **`scenarios/greenfield.md` + `docs/greenfield-harness.md`**: four gotchas
+  documented after running a real greenfield project (kumite-analyzer)
+  end-to-end through Stage 0/1/2 for the first time —
+  1. guard.sh smoke test must be run by asking Claude, not by typing the
+     forbidden command yourself in a terminal (hooks only see agent tool
+     calls).
+  2. `ANTHROPIC_API_KEY` must be a **repository** secret — an Environment or
+     unshared org secret silently yields `apiKeySource:none`, no error.
+  3. The shipped `evals/traces/001-example.md` is CraftPlan-specific and
+     fails on every other project's first `harness-evals` run — expected,
+     not broken, until `/retro` adds a real trace.
+  4. `/clear` only resets the `/cost` counter on Claude Code CLI v2.1.211+;
+     older versions accumulate cost across `/clear`, so per-feature $ in
+     metrics.md is unreliable without checking `claude --version` first.
+
 ## Changelog v1.6 (/log-metrics)
 - **`/log-metrics`**: new command — appends a row to `docs/metrics.md` per
   Invariant #4, but only asks for what actually needs human judgment
