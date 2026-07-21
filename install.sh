@@ -83,7 +83,7 @@ else
   fi
 fi
 
-mkdir -p "$REPO/docs" "$REPO/specs" "$REPO/evals/traces" "$REPO/evals/results" "$REPO/.github/workflows"
+mkdir -p "$REPO/docs" "$REPO/specs" "$REPO/evals/traces" "$REPO/evals/results" "$REPO/.github/workflows" "$REPO/docker"
 if [ "$UPDATE_MODE" = true ]; then
   # Overwrite CI workflows on update
   cp "$SRC"/ci/harness-evals.yml "$REPO/.github/workflows/" 2>/dev/null || true
@@ -92,6 +92,8 @@ if [ "$UPDATE_MODE" = true ]; then
   cp "$SRC"/ci/hooks-test.yml "$REPO/.github/workflows/" 2>/dev/null || true
   cp "$SRC"/evals/run.sh "$REPO/evals/run.sh" 2>/dev/null || true
   chmod +x "$REPO/evals/run.sh" 2>/dev/null || true
+  cp "$SRC"/docker/Dockerfile "$SRC"/docker/claude-run.sh "$SRC"/docker/exec.sh "$REPO/docker/" 2>/dev/null || true
+  chmod +x "$REPO"/docker/claude-run.sh "$REPO"/docker/exec.sh 2>/dev/null || true
 else
   # Fresh install: don't overwrite
   cp -n "$SRC"/ci/harness-evals.yml "$REPO/.github/workflows/" 2>/dev/null || true
@@ -104,6 +106,8 @@ else
   cp -n "$SRC"/evals/traces/001-example.md "$REPO/evals/traces/" 2>/dev/null || true
   chmod +x "$REPO/evals/run.sh" 2>/dev/null || true
   [ -f "$REPO/CLAUDE.md" ] || cp "$SRC/templates/CLAUDE.md.template" "$REPO/CLAUDE.md"
+  cp -n "$SRC"/docker/Dockerfile "$SRC"/docker/claude-run.sh "$SRC"/docker/exec.sh "$REPO/docker/" 2>/dev/null || true
+  chmod +x "$REPO"/docker/claude-run.sh "$REPO"/docker/exec.sh 2>/dev/null || true
 fi
 
 echo "$KIT_VERSION" > "$DST/VERSION"
