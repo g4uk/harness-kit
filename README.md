@@ -109,6 +109,15 @@ Per-trace trajectory/cost and PASS/FAIL stream to the console as each trace runs
 fact by opening `evals/results/*.md`; that file exists for the durable record
 and CI logs, not as the only place to see what happened.
 
+## Changelog v1.6.3 (install.sh: stop shipping the CraftPlan example trace)
+- **FIX**: `install.sh` no longer copies `evals/traces/001-example.md` into
+  new projects. It's a format reference for the fictional CraftPlan project
+  (Go, `internal/api`, `company_id`) — its checks can't pass in any other
+  project, so every fresh install got a guaranteed-permanent `harness-evals`
+  FAIL from day one, on top of the real trace(s) added later. The file stays
+  in the harness-kit repo itself as a reference (see `evals/traces/` and
+  `examples/craftplan-*.md`); it's just not copied out anymore.
+
 ## Changelog v1.6.2 (CRITICAL: empty-run was a permanent fail for merged traces)
 - **FIX**: `evals/run.sh` cloned the current tip of `$BASE_BRANCH` for every
   trace, always — so once a trace's feature was merged, replaying its own

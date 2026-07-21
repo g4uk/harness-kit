@@ -146,7 +146,7 @@ Product value: zero. But: the deploy pipeline works, migrations run, the tenant 
 laid down, CI is green, trace #0 sits in evals/. Every later feature is "adding meat to the
 skeleton", not "assembling the system".
 
-### 1.4 — Two gotchas on the first `harness-evals` CI run
+### 1.4 — Gotcha on the first `harness-evals` CI run
 
 **Secret scope:** `ANTHROPIC_API_KEY` must live in the repo's **Repository secrets**
 (Settings > Secrets and variables > Actions), not an Environment secret and not an org
@@ -156,12 +156,13 @@ reports `apiKeySource:none` with no error, not a loud failure. `evals/run.sh` su
 raw agent output on an unparseable trajectory (v1.5.1+) specifically so this is diagnosable
 from the CI log instead of a bare `turns=? cost=?`.
 
-**The shipped example trace fails on purpose (for now).** `evals/traces/001-example.md` is
-CraftPlan-specific (Go, `internal/api`, `git grep company_id`) — it cannot pass against any
-other project's repo. The first `harness-evals` run on a fresh install will be red because
-of this trace alone, even with the API key correctly configured. That's expected, not a
-signal something's broken: it's the only trace until `/retro` on feature #0 adds a real one
-for this project — see 2.3 below.
+**`evals/traces/` starts empty.** `install.sh` (v1.6.3+) no longer copies the old CraftPlan
+example trace into new projects — it was Go/`internal/api`/`company_id`-specific and could
+never pass against a different project's repo, so every fresh install got a guaranteed,
+permanent `harness-evals` FAIL from day one. With zero traces, `evals/run.sh` still exits
+non-zero (`$TOTAL -gt 0` is part of its own pass condition), so the job stays red — but now
+for the honest reason "no trace yet" instead of a bogus CraftPlan-specific one. It clears up
+once `/retro` on feature #0 adds this project's first real trace — see 2.3 below.
 
 ---
 

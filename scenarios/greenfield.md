@@ -25,15 +25,17 @@ own tool; it can't see you typing the same command yourself in a terminal.
 
 **Exit:** a request hits production and comes back; CI is green; trace #0 exists in evals/.
 
-**Two gotchas on the first CI push:**
-- `ANTHROPIC_API_KEY` must be a **repository** secret (Settings > Secrets and variables >
-  Actions > Repository secrets), not an Environment or org secret — `harness-evals`/
-  `agent-review` don't declare `environment:`, so anything scoped there is invisible to
-  the job and silently yields `apiKeySource:none` in the container, no error shown.
-- The shipped `evals/traces/001-example.md` is a CraftPlan placeholder (Go/`internal/api`/
-  `company_id` checks) — it will fail on every other project's first `harness-evals` run.
-  That's expected, not a break: it stops being the only trace once `/retro` on feature #0
-  adds a real one for this project.
+**Gotcha on the first CI push:** `ANTHROPIC_API_KEY` must be a **repository** secret
+(Settings > Secrets and variables > Actions > Repository secrets), not an Environment or
+org secret — `harness-evals`/`agent-review` don't declare `environment:`, so anything
+scoped there is invisible to the job and silently yields `apiKeySource:none` in the
+container, no error shown.
+
+`evals/traces/` starts empty (install.sh no longer ships the old CraftPlan placeholder
+trace, which could never pass in a different project). `evals/run.sh` still exits
+non-zero on zero traces (`$TOTAL -gt 0` is part of its own pass condition), so
+`harness-evals` stays red — for the honest reason "no trace yet", not a bogus
+CraftPlan-specific failure — until `/retro` on feature #0 adds this project's first one.
 
 ## Stage 2 — Vertical slices
 - [ ] Features shipped as vertical slices only; /retro after EVERY merge

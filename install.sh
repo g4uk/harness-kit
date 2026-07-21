@@ -103,7 +103,6 @@ else
   cp -n "$SRC"/templates/metrics.md.template "$REPO/docs/metrics.md" 2>/dev/null || true
   cp -n "$SRC"/templates/dispatch-matrix.md.template "$REPO/docs/dispatch-matrix.md" 2>/dev/null || true
   cp -n "$SRC"/evals/run.sh "$REPO/evals/run.sh" 2>/dev/null || true
-  cp -n "$SRC"/evals/traces/001-example.md "$REPO/evals/traces/" 2>/dev/null || true
   chmod +x "$REPO/evals/run.sh" 2>/dev/null || true
   [ -f "$REPO/CLAUDE.md" ] || cp "$SRC/templates/CLAUDE.md.template" "$REPO/CLAUDE.md"
   cp -n "$SRC"/docker/Dockerfile "$SRC"/docker/claude-run.sh "$SRC"/docker/exec.sh "$REPO/docker/" 2>/dev/null || true
