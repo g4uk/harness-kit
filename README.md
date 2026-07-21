@@ -109,6 +109,14 @@ Per-trace trajectory/cost and PASS/FAIL stream to the console as each trace runs
 fact by opening `evals/results/*.md`; that file exists for the durable record
 and CI logs, not as the only place to see what happened.
 
+## Changelog v1.6.5 (ci/agent-review.yml: missing id-token permission)
+- **FIX**: `anthropics/claude-code-action@v1` requests an OIDC token as part
+  of its own auth setup, but the job's `permissions` block only granted
+  `contents: read, pull-requests: write` — no `id-token: write`. Every PR
+  failed after 3 retries: "Could not fetch an OIDC token. Did you remember
+  to add `id-token: write` to your workflow permissions?" (the action's own
+  error names the fix). Added `id-token: write` to the job permissions.
+
 ## Changelog v1.6.4 (ci/harness-evals.yml: push trigger missing paths filter)
 - **FIX**: the `push: branches: [main]` trigger had no `paths:` filter, unlike
   its own `pull_request` trigger (and unlike `hooks-test.yml`, which had it
