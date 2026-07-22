@@ -112,6 +112,19 @@ Per-trace trajectory/cost and PASS/FAIL stream to the console as each trace runs
 fact by opening `evals/results/*.md`; that file exists for the durable record
 and CI logs, not as the only place to see what happened.
 
+## Changelog v1.7.3 (/log-metrics: read tokens from the session transcript, don't ask)
+- **FIX**: step 1 asked the user to manually run `/cost`/`/usage` and paste
+  the output — friction the command was supposed to remove in the first
+  place (v1.6's whole point). Found that Claude Code exposes
+  `$CLAUDE_CODE_SESSION_ID`, which pinpoints the current session's own
+  transcript at `~/.claude/projects/*/$CLAUDE_CODE_SESSION_ID.jsonl` —
+  every `assistant` message there carries real per-message token usage
+  (`input_tokens`, `output_tokens`, `cache_creation_input_tokens`,
+  `cache_read_input_tokens`). `/log-metrics` now finds that file via `find`
+  (sidesteps needing to know the project-path escaping scheme) and sums
+  tokens directly — no copy-paste. Falls back to the old ask-the-user path
+  only if the session ID/file isn't available.
+
 ## Changelog v1.7.2 (self-adjusting trace-count gate, not a manual uncomment)
 - **Reworked v1.7.1's fix** after feedback that "uncomment the triggers later"
   is exactly the kind of manual step this whole session kept tripping over.

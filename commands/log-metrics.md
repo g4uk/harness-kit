@@ -5,10 +5,25 @@ Invariant #4: metrics are deliberately manual, but only the parts that need a
 human's judgment. Everything objectively knowable should be filled in without
 asking.
 
-1. **Tokens / $ / duration** — if `/cost` or `/usage` output is already visible
-   earlier in this conversation, read it from there. Otherwise ask me to run
-   `/cost` (or `/usage`, depending on CLI version) now and paste the result —
-   do NOT guess these numbers.
+1. **Tokens / $** — compute directly, do not ask me to run anything:
+   ```
+   TRANSCRIPT=$(find "$HOME/.claude/projects" -name "${CLAUDE_CODE_SESSION_ID}.jsonl" 2>/dev/null | head -1)
+   ```
+   If `$CLAUDE_CODE_SESSION_ID` is unset or no file is found, fall back to: if
+   `/cost`/`/usage` output is already visible earlier in this conversation,
+   read it from there; otherwise ask me to run `/cost` (or `/usage`) once and
+   paste the result. Do NOT guess.
+
+   Otherwise, read every `"type":"assistant"` line's `message.usage` from
+   `$TRANSCRIPT` (jq/python — whichever is available) and sum
+   `input_tokens`, `output_tokens`, `cache_creation_input_tokens`,
+   `cache_read_input_tokens` across the whole session; note the `model`
+   field too. Tokens = those four summed. For $, apply current Anthropic API
+   per-model pricing (input / output / cache-write / cache-read rates differ
+   — use what you know to be current; if unsure, say the $ figure is
+   approximate rather than inventing precision) to that same breakdown.
+   Label the row's $ as computed-from-tokens vs from `/cost` if it matters
+   for the Note field.
 
 2. **LOC diff** — derive automatically, do not ask:
    ```
