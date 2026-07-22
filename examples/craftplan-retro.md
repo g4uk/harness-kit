@@ -23,5 +23,5 @@
 ## Next Phase Decisions
 1. **Sketch 3D rendering strategy** before committing to Three.js in CI (spike).
 2. **Template**: BOM calculation → extract to `BOM Builder` skill.
-3. **Trace**: evals/craftplan-v0.1 passed; add to baseline (no regression).
+3. **Trace**: harness/evals/craftplan-v0.1 passed; add to baseline (no regression).
 4. **Cost**: ~$0.07 per cycle at this scale; acceptable. Monitor on 3D spike.

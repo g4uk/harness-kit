@@ -23,7 +23,7 @@ own tool; it can't see you typing the same command yourself in a terminal.
 - [ ] Feature #0 = the thinnest end-to-end slice, deployed. Via /harness:spec → /harness:plan → implement → /harness:verify
 - [ ] CI (test+lint) + plan-verifier from PR #1
 
-**Exit:** a request hits production and comes back; CI is green; trace #0 exists in evals/.
+**Exit:** a request hits production and comes back; CI is green; trace #0 exists in harness/evals/.
 
 **Gotcha on the first CI push:** `ANTHROPIC_API_KEY` must be a **repository** secret
 (Settings > Secrets and variables > Actions > Repository secrets), not an Environment or
@@ -45,13 +45,13 @@ improvement produced by /harness:retro; cost per feature is known, not guessed.
 
 ## Stage 3 — Agents & evals
 - [ ] Subagents — trigger: researcher becomes useful (roughly 15-20 logic files)
-- [ ] evals/run.sh first baseline — trigger: ~6 accumulated traces
+- [ ] harness/evals/run.sh first baseline — trigger: ~6 accumulated traces
 - [ ] MCP — trigger: the first external state; token audit (/context) right away
 
 `ci/harness-evals.yml`'s `pull_request`/`push` triggers are always on — no manual
-uncommenting needed. `evals/run.sh` self-adjusts instead: `EVAL_MIN_TRACES` (set to 6 in
+uncommenting needed. `harness/evals/run.sh` self-adjusts instead: `EVAL_MIN_TRACES` (set to 6 in
 the workflow) makes it exit instantly, before touching docker or the API key, whenever
-`evals/traces/` has fewer traces than that. Once `/harness:retro` pushes the count past the
+`harness/evals/traces/` has fewer traces than that. Once `/harness:retro` pushes the count past the
 threshold, real runs simply start happening — nothing to edit. Force a real run earlier
 via `gh workflow run harness-evals` (uses `workflow_dispatch`, ignores the trace count) if
 you want to sanity-check it before then.

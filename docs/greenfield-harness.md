@@ -47,7 +47,7 @@ the agent's "why is it like this here" — which it will otherwise invent.
 
 ```bash
 mkdir craftplan && cd craftplan && git init
-mkdir -p cmd/api internal db/{migrations,queries} web docs specs evals/traces .claude/{skills,agents,commands,hooks}
+mkdir -p cmd/api internal db/{migrations,queries} web docs specs harness/evals/traces .claude/{skills,agents,commands,hooks}
 go mod init github.com/me/craftplan
 ```
 
@@ -101,7 +101,7 @@ installed plugins). `/harness:retro` is the greenfield-critical one:
 Feature $ARGUMENTS is merged. Do:
 1. Compare specs/$ARGUMENTS/spec.md with the final implementation — list divergences
 2. For each: a gap in the spec template, the plan, or CLAUDE.md? Propose the fix
-3. Create evals/traces/NNN-$ARGUMENTS.md: prompt = the feature in one paragraph,
+3. Create harness/evals/traces/NNN-$ARGUMENTS.md: prompt = the feature in one paragraph,
    checks = 3-4 verifiable criteria from the acceptance criteria
 4. If a new convention emerged — propose a CLAUDE.md line
 Show me everything for approval; commit nothing yourself.
@@ -144,15 +144,15 @@ ever exists without a plan).
 ### 1.3 — Exit criterion
 
 Product value: zero. But: the deploy pipeline works, migrations run, the tenant pattern is
-laid down, CI is green, trace #0 sits in evals/. Every later feature is "adding meat to the
+laid down, CI is green, trace #0 sits in harness/evals/. Every later feature is "adding meat to the
 skeleton", not "assembling the system".
 
 ### 1.4 — `harness-evals` self-adjusts to the trace count
 
 `ci/harness-evals.yml`'s `pull_request`/`push` triggers are always on — nothing to
-uncomment later. `evals/run.sh` reads `EVAL_MIN_TRACES` (the workflow sets it to 6,
+uncomment later. `harness/evals/run.sh` reads `EVAL_MIN_TRACES` (the workflow sets it to 6,
 matching Stage 3's own "first baseline" threshold) and exits instantly — before touching
-docker or the API key — whenever `evals/traces/` has fewer traces than that. Below the
+docker or the API key — whenever `harness/evals/traces/` has fewer traces than that. Below the
 threshold, `/harness:retro` commits push and nothing runs (no API $ spent on a baseline with only
 one or two traces to compare against); once `/harness:retro` pushes the count past it, real runs
 just start happening. `gh workflow run harness-evals` (`workflow_dispatch`) always runs for
@@ -163,7 +163,7 @@ real regardless of count, if you want to sanity-check it sooner.
 secret and not an org secret that isn't shared with this repo. Neither `harness-evals.yml`
 nor `agent-review.yml` declares `environment:`, so anything scoped there is invisible to the
 job — the container reports `apiKeySource:none` with no error, not a loud failure.
-`evals/run.sh` surfaces the raw agent output on an unparseable trajectory (v1.5.1+)
+`harness/evals/run.sh` surfaces the raw agent output on an unparseable trajectory (v1.5.1+)
 specifically so this is diagnosable from the CI log instead of a bare `turns=? cost=?`.
 
 ---
@@ -228,7 +228,7 @@ feature → the full pipeline; edits to fresh code → a monolith session (the c
 
 ### 3.2 — Evals have accumulated by themselves
 
-After ~6-8 features, evals/traces/ holds 6-8 traces from /harness:retro — past `EVAL_MIN_TRACES`
+After ~6-8 features, harness/evals/traces/ holds 6-8 traces from /harness:retro — past `EVAL_MIN_TRACES`
 (6, see 1.4), so `ci/harness-evals.yml`'s already-active triggers stop self-skipping and
 start actually running on every relevant push/PR, no edits needed. Take that first run as
 the baseline. From this moment: **changing CLAUDE.md or a skill without an eval run =

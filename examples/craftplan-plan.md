@@ -38,7 +38,7 @@
 
 ### Phase 5: Eval Trace + CI (1h)
 **Tasks**:
-- [ ] Write evals/traces/craftplan-v0.1.md (checks: npm test, go test, curl /api/bom)
+- [ ] Write harness/evals/traces/craftplan-v0.1.md (checks: npm test, go test, curl /api/bom)
 - [ ] Add to harness-evals.yml
 
 **Verification**: CI runs; trace passes.

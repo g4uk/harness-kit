@@ -23,7 +23,7 @@ const SCENARIOS = {
         items: [
           "Feature #0: end-to-end slice deployed (/harness:spec → /harness:plan → /harness:verify)",
           "CI + plan-verifier from PR #1",
-          "Trace #0 in evals/traces/",
+          "Trace #0 in harness/evals/traces/",
         ],
       },
       {

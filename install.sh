@@ -93,17 +93,35 @@ else
   fi
 fi
 
-mkdir -p "$REPO/docs" "$REPO/specs" "$REPO/evals/traces" "$REPO/evals/results" "$REPO/.github/workflows" "$REPO/docker"
+# v1.9 migration: docker/ and evals/ move under harness/ (avoids colliding
+# with a project's own docker/ folder for its actual product — e.g. a
+# docker-compose app). Only migrate if it looks like OUR files (never blindly
+# delete: evals/traces/*.md and evals/results/*.md are real project history,
+# not kit boilerplate) and only if the new location doesn't exist yet.
+if [ "$UPDATE_MODE" = true ]; then
+  if [ -f "$REPO/docker/claude-run.sh" ] && [ -f "$REPO/docker/exec.sh" ] && [ ! -d "$REPO/harness/docker" ]; then
+    mkdir -p "$REPO/harness"
+    mv "$REPO/docker" "$REPO/harness/docker"
+    echo ">> Migrated docker/ -> harness/docker/"
+  fi
+  if [ -f "$REPO/evals/run.sh" ] && [ ! -d "$REPO/harness/evals" ]; then
+    mkdir -p "$REPO/harness"
+    mv "$REPO/evals" "$REPO/harness/evals"
+    echo ">> Migrated evals/ -> harness/evals/ (traces/ and results/ preserved)"
+  fi
+fi
+
+mkdir -p "$REPO/docs" "$REPO/specs" "$REPO/harness/evals/traces" "$REPO/harness/evals/results" "$REPO/.github/workflows" "$REPO/harness/docker"
 if [ "$UPDATE_MODE" = true ]; then
   # Overwrite CI workflows on update
   cp "$SRC"/ci/harness-evals.yml "$REPO/.github/workflows/" 2>/dev/null || true
   cp "$SRC"/ci/agent-review.yml "$REPO/.github/workflows/" 2>/dev/null || true
   cp "$SRC"/ci/plan-verify.yml "$REPO/.github/workflows/" 2>/dev/null || true
   cp "$SRC"/ci/hooks-test.yml "$REPO/.github/workflows/" 2>/dev/null || true
-  cp "$SRC"/evals/run.sh "$REPO/evals/run.sh" 2>/dev/null || true
-  chmod +x "$REPO/evals/run.sh" 2>/dev/null || true
-  cp "$SRC"/docker/Dockerfile "$SRC"/docker/claude-run.sh "$SRC"/docker/exec.sh "$REPO/docker/" 2>/dev/null || true
-  chmod +x "$REPO"/docker/claude-run.sh "$REPO"/docker/exec.sh 2>/dev/null || true
+  cp "$SRC"/harness/evals/run.sh "$REPO/harness/evals/run.sh" 2>/dev/null || true
+  chmod +x "$REPO/harness/evals/run.sh" 2>/dev/null || true
+  cp "$SRC"/harness/docker/Dockerfile "$SRC"/harness/docker/claude-run.sh "$SRC"/harness/docker/exec.sh "$REPO/harness/docker/" 2>/dev/null || true
+  chmod +x "$REPO"/harness/docker/claude-run.sh "$REPO"/harness/docker/exec.sh 2>/dev/null || true
 else
   # Fresh install: don't overwrite
   cp -n "$SRC"/ci/harness-evals.yml "$REPO/.github/workflows/" 2>/dev/null || true
@@ -112,11 +130,11 @@ else
   cp -n "$SRC"/ci/hooks-test.yml "$REPO/.github/workflows/" 2>/dev/null || true
   cp -n "$SRC"/templates/metrics.md.template "$REPO/docs/metrics.md" 2>/dev/null || true
   cp -n "$SRC"/templates/dispatch-matrix.md.template "$REPO/docs/dispatch-matrix.md" 2>/dev/null || true
-  cp -n "$SRC"/evals/run.sh "$REPO/evals/run.sh" 2>/dev/null || true
-  chmod +x "$REPO/evals/run.sh" 2>/dev/null || true
+  cp -n "$SRC"/harness/evals/run.sh "$REPO/harness/evals/run.sh" 2>/dev/null || true
+  chmod +x "$REPO/harness/evals/run.sh" 2>/dev/null || true
   [ -f "$REPO/CLAUDE.md" ] || cp "$SRC/templates/CLAUDE.md.template" "$REPO/CLAUDE.md"
-  cp -n "$SRC"/docker/Dockerfile "$SRC"/docker/claude-run.sh "$SRC"/docker/exec.sh "$REPO/docker/" 2>/dev/null || true
-  chmod +x "$REPO"/docker/claude-run.sh "$REPO"/docker/exec.sh 2>/dev/null || true
+  cp -n "$SRC"/harness/docker/Dockerfile "$SRC"/harness/docker/claude-run.sh "$SRC"/harness/docker/exec.sh "$REPO/harness/docker/" 2>/dev/null || true
+  chmod +x "$REPO"/harness/docker/claude-run.sh "$REPO"/harness/docker/exec.sh 2>/dev/null || true
 fi
 
 echo "$KIT_VERSION" > "$DST/VERSION"

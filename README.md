@@ -1,10 +1,10 @@
-# harness-kit v1.8
+# harness-kit v1.9
 
 A shared harness core for three Claude Code working scenarios.
 Progression is gated by evidence (exit criteria per stage), not by a calendar.
 
 ## Requirements
-- **docker** (mandatory for eval runs). Policy: the agent's own run always executes in the harness-runner sandbox; checks (base check + trace `cmd:`, human-approved via `/harness:retro`) do too by default, but run directly on the host when `HARNESS_EVAL_CHECKS_HOST=1` — set by `ci/harness-evals.yml` for GitHub Actions (already an isolated, single-job VM with a native Docker daemon), opt-in for any other CI. See `evals/run.sh`.
+- **docker** (mandatory for eval runs). Policy: the agent's own run always executes in the harness-runner sandbox; checks (base check + trace `cmd:`, human-approved via `/harness:retro`) do too by default, but run directly on the host when `HARNESS_EVAL_CHECKS_HOST=1` — set by `ci/harness-evals.yml` for GitHub Actions (already an isolated, single-job VM with a native Docker daemon), opt-in for any other CI. See `harness/evals/run.sh`.
 - **bash** + **jq** (for guard.sh and local orchestration).
   - macOS: `brew install jq docker`
   - Linux: `apt install jq` + install Docker from docker.io
@@ -28,16 +28,18 @@ ci/          harness-evals.yml (invariant #6 as code) · agent-review.yml
              plan-verify.yml (custom plan coherence checks) · hooks-test.yml (regression detection)
 templates/   CLAUDE.md, CLAUDE.local.md, surface-map, decisions, metrics,
              dispatch-matrix, spec, plan, eval-trace
-evals/       run.sh — Docker-only orchestrator; output eval (checks) + trajectory eval
-             (turns/tools) + cost from the JSON transcript · traces/001-example.md
+harness/     installed at the project's harness/ (not root — avoids colliding with the
+             project's own docker/ folder for its actual product, if it has one):
+  evals/       run.sh — Docker-only orchestrator; output eval (checks) + trajectory eval
+               (turns/tools) + cost from the JSON transcript · traces/
+  docker/      Dockerfile (harness-runner image) · claude-run.sh · exec.sh (container boundary)
 scenarios/   greenfield · onboarding · existing-own — checklist overlays
 docs/        full step-by-step guides the kit was distilled from
 examples/    craftplan-spec.md, plan.md, retro.md — complete spec→plan→retro cycle (learning reference)
 extras/      harness-dashboard.jsx — interactive progress tracker (Claude artifact)
 tests/       hooks.test.sh — guard.sh regression tests · runner-smoke.sh — eval runner self-test
 build/       dashboard.sh — generates artifact-ready version for offline use
-docker/      Dockerfile (harness-runner image) · claude-run.sh · exec.sh (container boundary)
-install.sh   → project .claude/ (with settings and CI) or ~/.claude (--user)
+install.sh   → project .claude/ + harness/ (with settings and CI) or ~/.claude (--user)
 VERSION      Kit version for update detection
 ```
 
@@ -46,7 +48,7 @@ VERSION      Kit version for update detection
    sandbox (non-root user, dropped capabilities, resource limits, throwaway mounts). Checks
    (human-approved via `/harness:retro`, not agent-authored) do too by default; `HARNESS_EVAL_CHECKS_HOST=1`
    (set for GitHub Actions in `ci/harness-evals.yml`) runs them directly on an already-isolated
-   CI runner instead — see `evals/run.sh`.
+   CI runner instead — see `harness/evals/run.sh`.
 1. **permissions in settings.json — deny-by-default.** Only the allow-list is permitted.
    Primary layer for interactive sessions on the host: can't be bypassed by rephrasing.
 2. **guard.sh** — readable block explanations + patterns beyond the permissions syntax
@@ -101,7 +103,7 @@ Keep that boundary explicit per task, not implicit per developer — a team that
 blurs it ships prototypes to production by accident.
 
 ## Evals: what gets verified
-`evals/run.sh` checks two different things per trace, because a fluent diff that
+`harness/evals/run.sh` checks two different things per trace, because a fluent diff that
 skipped its own verification is a worse failure than one that errored visibly:
 - **Output eval** — the `cmd:` checks in a trace file, run against the agent's
   final diff (does it compile, does the expected line exist, is scope respected).
@@ -111,8 +113,32 @@ skipped its own verification is a worse failure than one that errored visibly:
   output check alone can't see — `EVAL_MAX_TURNS` (default 30) fails it.
 Per-trace trajectory/cost and PASS/FAIL stream to the console as each trace runs
 (`tee`d to the results file too) — nothing about a run is only visible after the
-fact by opening `evals/results/*.md`; that file exists for the durable record
+fact by opening `harness/evals/results/*.md`; that file exists for the durable record
 and CI logs, not as the only place to see what happened.
+
+## Changelog v1.9 (BREAKING: docker/ and evals/ move under harness/)
+- **`docker/` and `evals/` (in installed projects) move to `harness/docker/`
+  and `harness/evals/`** — a project's own product can reasonably have its
+  own `docker/` folder (compose services, its own Dockerfile) that has
+  nothing to do with the kit's sandbox image; the two were sitting at the
+  same root-level path with no relation, which is exactly the kind of
+  confusion that prompted the `commands/harness/` namespace in v1.8. `docs/`
+  and `specs/` stay at the root — they're project content (decisions,
+  metrics, feature specs), not kit tooling, even though `/harness:onboard`
+  and `/harness:spec` generate them.
+- `install.sh --update` migrates existing installs: detects the old
+  `docker/`/`evals/` by their kit-specific files (`docker/claude-run.sh` +
+  `docker/exec.sh`; `evals/run.sh`) and **moves** them (never deletes blind —
+  `evals/traces/*.md` and `evals/results/*.md` are real project history, not
+  kit boilerplate). Verified: a fixture with real trace/result content
+  migrates with that content intact; a fresh install produces
+  `harness/{docker,evals}/` directly; `docker build` and the full
+  `tests/runner-smoke.sh` pipeline both work from the new paths.
+- `ci/harness-evals.yml`'s path filters, build step, and run step updated to
+  `harness/docker/**` / `harness/evals/**`. Every doc, example, and the
+  kit's own `harness/evals/run.sh` / `harness/docker/*.sh` self-references
+  updated to match — `PATCH.md` (historical, describes v1.3) intentionally
+  left as-is.
 
 ## Changelog v1.8 (BREAKING: commands namespaced under harness:)
 - **All 8 kit commands moved from `.claude/commands/*.md` to

@@ -636,7 +636,7 @@ prompt: |
 This is the regression test for the harness itself. Structure:
 
 ```
-evals/
+harness/evals/
   traces/
     001-finish-summary-endpoint.md   # task + verification criteria
     002-tenant-filter-bug.md
@@ -657,7 +657,7 @@ Add GET /projects/{id}/finish-summary returning finishing meters per type.
 - [ ] (manual) handler ≤40 lines, logic in internal/parts
 ```
 
-`evals/run.sh` (shipped in the kit): a fresh worktree per trace, a headless run
+`harness/evals/run.sh` (shipped in the kit): a fresh worktree per trace, a headless run
 (`claude -p ... --output-format json`), then deterministic checks. Run it after every
 CLAUDE.md/skills/hooks change → watch the pass rate move. Record the baseline in the
 first results file. From then on: **changing CLAUDE.md or a skill without an eval run =
