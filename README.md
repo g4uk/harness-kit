@@ -112,6 +112,21 @@ Per-trace trajectory/cost and PASS/FAIL stream to the console as each trace runs
 fact by opening `evals/results/*.md`; that file exists for the durable record
 and CI logs, not as the only place to see what happened.
 
+## Changelog v1.7.2 (self-adjusting trace-count gate, not a manual uncomment)
+- **Reworked v1.7.1's fix** after feedback that "uncomment the triggers later"
+  is exactly the kind of manual step this whole session kept tripping over.
+  `pull_request`/`push` triggers are back on, always — `evals/run.sh` now
+  reads `EVAL_MIN_TRACES` itself and exits instantly (before docker, before
+  touching the API key) when `evals/traces/` has fewer traces than that.
+  `ci/harness-evals.yml` sets it to 6 for `push`/`pull_request` (Stage 3's
+  own baseline threshold) but 0 for `workflow_dispatch` — a human explicitly
+  requesting a run always gets a real one, count aside.
+- Net effect: **nothing to edit, ever.** Early on it silently no-ops on
+  every `/retro` commit at ~0 cost; once traces cross the threshold, real
+  runs simply start happening. `scenarios/greenfield.md` and
+  `docs/greenfield-harness.md` updated to describe this instead of the
+  now-superseded "uncomment at Stage 3" instruction from v1.7.1.
+
 ## Changelog v1.7.1 (ci/harness-evals.yml: workflow_dispatch-only by default)
 - **`harness-evals` no longer auto-triggers.** It costs a real API call per
   trace, and with fewer than the ~6 traces Stage 3 calls a real baseline, it

@@ -29,8 +29,8 @@ own tool; it can't see you typing the same command yourself in a terminal.
 (Settings > Secrets and variables > Actions > Repository secrets), not an Environment or
 org secret — `harness-evals`/`agent-review` don't declare `environment:`, so anything
 scoped there is invisible to the job and silently yields `apiKeySource:none` in the
-container, no error shown. (Only matters once you actually run `harness-evals` —
-see the note in Stage 3: it's `workflow_dispatch`-only by default, not on every push.)
+container, no error shown. (Only matters once `harness-evals` actually runs for real —
+see Stage 3: below the trace threshold it self-skips before touching the API key at all.)
 
 ## Stage 2 — Vertical slices
 - [ ] Features shipped as vertical slices only; /retro after EVERY merge
@@ -48,11 +48,13 @@ improvement produced by /retro; cost per feature is known, not guessed.
 - [ ] evals/run.sh first baseline — trigger: ~6 accumulated traces
 - [ ] MCP — trigger: the first external state; token audit (/context) right away
 
-`ci/harness-evals.yml` ships with automatic triggers commented out (`workflow_dispatch`
-only) — before this stage it's real API $ per trace, on every `/retro` commit, for little
-regression-catching value with only a couple of traces. Run it manually
-(`gh workflow run harness-evals`, or Actions tab → Run workflow) until you have a real
-baseline here; then uncomment the `pull_request`/`push` triggers in the workflow file.
+`ci/harness-evals.yml`'s `pull_request`/`push` triggers are always on — no manual
+uncommenting needed. `evals/run.sh` self-adjusts instead: `EVAL_MIN_TRACES` (set to 6 in
+the workflow) makes it exit instantly, before touching docker or the API key, whenever
+`evals/traces/` has fewer traces than that. Once `/retro` pushes the count past the
+threshold, real runs simply start happening — nothing to edit. Force a real run earlier
+via `gh workflow run harness-evals` (uses `workflow_dispatch`, ignores the trace count) if
+you want to sanity-check it before then.
 
 **Exit:** dispatch matrix reflects measured (not assumed) agent trustworthiness;
 eval baseline recorded.

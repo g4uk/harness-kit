@@ -146,14 +146,16 @@ Product value: zero. But: the deploy pipeline works, migrations run, the tenant 
 laid down, CI is green, trace #0 sits in evals/. Every later feature is "adding meat to the
 skeleton", not "assembling the system".
 
-### 1.4 — `harness-evals` doesn't run automatically yet (by design)
+### 1.4 — `harness-evals` self-adjusts to the trace count
 
-`ci/harness-evals.yml` ships with `pull_request`/`push` triggers commented out —
-`workflow_dispatch` only. Before ~6 accumulated traces (Stage 3's own trigger for a first
-baseline), auto-running it means a real API call per trace on every `/retro` commit (which
-always touches `CLAUDE.md` + `evals/traces/`), for little regression-catching value with
-only one or two traces. Run it manually (`gh workflow run harness-evals`, or Actions tab →
-Run workflow) whenever you want to check it; uncomment the triggers at Stage 3.
+`ci/harness-evals.yml`'s `pull_request`/`push` triggers are always on — nothing to
+uncomment later. `evals/run.sh` reads `EVAL_MIN_TRACES` (the workflow sets it to 6,
+matching Stage 3's own "first baseline" threshold) and exits instantly — before touching
+docker or the API key — whenever `evals/traces/` has fewer traces than that. Below the
+threshold, `/retro` commits push and nothing runs (no API $ spent on a baseline with only
+one or two traces to compare against); once `/retro` pushes the count past it, real runs
+just start happening. `gh workflow run harness-evals` (`workflow_dispatch`) always runs for
+real regardless of count, if you want to sanity-check it sooner.
 
 **Secret scope, for whenever you do run it:** `ANTHROPIC_API_KEY` must live in the repo's
 **Repository secrets** (Settings > Secrets and variables > Actions), not an Environment
@@ -225,13 +227,11 @@ feature → the full pipeline; edits to fresh code → a monolith session (the c
 
 ### 3.2 — Evals have accumulated by themselves
 
-After ~6-8 features, evals/traces/ holds 6-8 traces from /retro. Run the kit's run.sh and
-take the first baseline. From this moment: **changing CLAUDE.md or a skill without an eval
-run = changing code without tests** (the kit's ci/harness-evals.yml enforces it) — this is
-also the point to uncomment the `pull_request`/`push` triggers in
-`ci/harness-evals.yml` (shipped `workflow_dispatch`-only per 1.4, to avoid paying for a
-real API call per trace on every early `/retro` commit before there was a baseline worth
-protecting).
+After ~6-8 features, evals/traces/ holds 6-8 traces from /retro — past `EVAL_MIN_TRACES`
+(6, see 1.4), so `ci/harness-evals.yml`'s already-active triggers stop self-skipping and
+start actually running on every relevant push/PR, no edits needed. Take that first run as
+the baseline. From this moment: **changing CLAUDE.md or a skill without an eval run =
+changing code without tests** (the kit's ci/harness-evals.yml enforces it, for real, now).
 
 ### 3.3 — MCP — only at the first external state
 
