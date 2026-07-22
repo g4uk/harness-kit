@@ -146,23 +146,22 @@ Product value: zero. But: the deploy pipeline works, migrations run, the tenant 
 laid down, CI is green, trace #0 sits in evals/. Every later feature is "adding meat to the
 skeleton", not "assembling the system".
 
-### 1.4 — Gotcha on the first `harness-evals` CI run
+### 1.4 — `harness-evals` doesn't run automatically yet (by design)
 
-**Secret scope:** `ANTHROPIC_API_KEY` must live in the repo's **Repository secrets**
-(Settings > Secrets and variables > Actions), not an Environment secret and not an org
-secret that isn't shared with this repo. Neither `harness-evals.yml` nor `agent-review.yml`
-declares `environment:`, so anything scoped there is invisible to the job — the container
-reports `apiKeySource:none` with no error, not a loud failure. `evals/run.sh` surfaces the
-raw agent output on an unparseable trajectory (v1.5.1+) specifically so this is diagnosable
-from the CI log instead of a bare `turns=? cost=?`.
+`ci/harness-evals.yml` ships with `pull_request`/`push` triggers commented out —
+`workflow_dispatch` only. Before ~6 accumulated traces (Stage 3's own trigger for a first
+baseline), auto-running it means a real API call per trace on every `/retro` commit (which
+always touches `CLAUDE.md` + `evals/traces/`), for little regression-catching value with
+only one or two traces. Run it manually (`gh workflow run harness-evals`, or Actions tab →
+Run workflow) whenever you want to check it; uncomment the triggers at Stage 3.
 
-**`evals/traces/` starts empty.** `install.sh` (v1.6.3+) no longer copies the old CraftPlan
-example trace into new projects — it was Go/`internal/api`/`company_id`-specific and could
-never pass against a different project's repo, so every fresh install got a guaranteed,
-permanent `harness-evals` FAIL from day one. With zero traces, `evals/run.sh` still exits
-non-zero (`$TOTAL -gt 0` is part of its own pass condition), so the job stays red — but now
-for the honest reason "no trace yet" instead of a bogus CraftPlan-specific one. It clears up
-once `/retro` on feature #0 adds this project's first real trace — see 2.3 below.
+**Secret scope, for whenever you do run it:** `ANTHROPIC_API_KEY` must live in the repo's
+**Repository secrets** (Settings > Secrets and variables > Actions), not an Environment
+secret and not an org secret that isn't shared with this repo. Neither `harness-evals.yml`
+nor `agent-review.yml` declares `environment:`, so anything scoped there is invisible to the
+job — the container reports `apiKeySource:none` with no error, not a loud failure.
+`evals/run.sh` surfaces the raw agent output on an unparseable trajectory (v1.5.1+)
+specifically so this is diagnosable from the CI log instead of a bare `turns=? cost=?`.
 
 ---
 
@@ -228,7 +227,11 @@ feature → the full pipeline; edits to fresh code → a monolith session (the c
 
 After ~6-8 features, evals/traces/ holds 6-8 traces from /retro. Run the kit's run.sh and
 take the first baseline. From this moment: **changing CLAUDE.md or a skill without an eval
-run = changing code without tests** (the kit's ci/harness-evals.yml enforces it).
+run = changing code without tests** (the kit's ci/harness-evals.yml enforces it) — this is
+also the point to uncomment the `pull_request`/`push` triggers in
+`ci/harness-evals.yml` (shipped `workflow_dispatch`-only per 1.4, to avoid paying for a
+real API call per trace on every early `/retro` commit before there was a baseline worth
+protecting).
 
 ### 3.3 — MCP — only at the first external state
 

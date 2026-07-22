@@ -112,6 +112,17 @@ Per-trace trajectory/cost and PASS/FAIL stream to the console as each trace runs
 fact by opening `evals/results/*.md`; that file exists for the durable record
 and CI logs, not as the only place to see what happened.
 
+## Changelog v1.7.1 (ci/harness-evals.yml: workflow_dispatch-only by default)
+- **`harness-evals` no longer auto-triggers.** It costs a real API call per
+  trace, and with fewer than the ~6 traces Stage 3 calls a real baseline, it
+  was firing on every `/retro` commit (which always touches `CLAUDE.md` +
+  `evals/traces/`) for little regression-catching value yet. Ships with
+  `pull_request`/`push` triggers commented out, `workflow_dispatch` only —
+  run it manually (`gh workflow run harness-evals`) until you have a real
+  baseline, then uncomment. `scenarios/greenfield.md` and
+  `docs/greenfield-harness.md` updated at both Stage 1 (why it's quiet by
+  default) and Stage 3 (when/how to turn the triggers back on).
+
 ## Changelog v1.7 (evals: opt-in un-sandboxed checks via HARNESS_EVAL_CHECKS_HOST)
 - **Resolves the docker-in-sandbox limitation** (open since v1.6.2/v1.6.3):
   `docker compose`-based `cmd:` checks could never pass, because

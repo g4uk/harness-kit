@@ -29,13 +29,8 @@ own tool; it can't see you typing the same command yourself in a terminal.
 (Settings > Secrets and variables > Actions > Repository secrets), not an Environment or
 org secret — `harness-evals`/`agent-review` don't declare `environment:`, so anything
 scoped there is invisible to the job and silently yields `apiKeySource:none` in the
-container, no error shown.
-
-`evals/traces/` starts empty (install.sh no longer ships the old CraftPlan placeholder
-trace, which could never pass in a different project). `evals/run.sh` still exits
-non-zero on zero traces (`$TOTAL -gt 0` is part of its own pass condition), so
-`harness-evals` stays red — for the honest reason "no trace yet", not a bogus
-CraftPlan-specific failure — until `/retro` on feature #0 adds this project's first one.
+container, no error shown. (Only matters once you actually run `harness-evals` —
+see the note in Stage 3: it's `workflow_dispatch`-only by default, not on every push.)
 
 ## Stage 2 — Vertical slices
 - [ ] Features shipped as vertical slices only; /retro after EVERY merge
@@ -52,6 +47,12 @@ improvement produced by /retro; cost per feature is known, not guessed.
 - [ ] Subagents — trigger: researcher becomes useful (roughly 15-20 logic files)
 - [ ] evals/run.sh first baseline — trigger: ~6 accumulated traces
 - [ ] MCP — trigger: the first external state; token audit (/context) right away
+
+`ci/harness-evals.yml` ships with automatic triggers commented out (`workflow_dispatch`
+only) — before this stage it's real API $ per trace, on every `/retro` commit, for little
+regression-catching value with only a couple of traces. Run it manually
+(`gh workflow run harness-evals`, or Actions tab → Run workflow) until you have a real
+baseline here; then uncomment the `pull_request`/`push` triggers in the workflow file.
 
 **Exit:** dispatch matrix reflects measured (not assumed) agent trustworthiness;
 eval baseline recorded.
