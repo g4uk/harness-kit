@@ -20,7 +20,7 @@ Stages advance on **exit criteria**, not the calendar.
 **Exit:** topology choice per task type is backed by your own numbers; MCP context cost is known.
 
 ## Stage 3 — Quality gates
-- [ ] One feature through the full /spec→/plan→implement→/verify cycle + cost.md + /retro
+- [ ] One feature through the full /harness:spec→/harness:plan→implement→/harness:verify cycle + cost.md + /harness:retro
 - [ ] hooks active and hand-tested (echo JSON | hook.sh; exit=2 on denials)
 - [ ] plan-verifier in CI; ~20 traces (from tasks you've done) + baseline run.sh; mutation report
 - [ ] Rule: changing CLAUDE.md/skills without an eval run = code without tests

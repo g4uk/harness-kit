@@ -7,7 +7,7 @@
 | Item | Plan | Actual | Note |
 |------|------|--------|------|
 | Effort (h) | 9 | 14.5 | Three.js WebGL headless debugging +3h |
-| Tokens | 80k | 124k | Extra /verify → /replan loop |
+| Tokens | 80k | 124k | Extra /harness:verify → re-plan loop |
 | First-pass? | — | No | Headless WebGL failed; rewrote canvas |
 | PR rounds | — | 2 | Missed edge case: width=0 → div-by-zero in BOM |
 

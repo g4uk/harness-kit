@@ -223,12 +223,13 @@ Same pattern:
 
 ### Step 2.4 — Slash commands
 
-Create `.claude/commands/spec.md`, `plan.md`, `commit.md` (the kit ships ready versions —
-see commands/). The key properties:
-- `/spec` generates specs/<name>/spec.md with verifiable acceptance criteria and asks
+Create `.claude/commands/harness/spec.md`, `plan.md`, `commit.md` (the kit ships ready
+versions — see commands/harness/). Namespaced under `harness:` so they don't collide with
+other installed plugins' commands. The key properties:
+- `/harness:spec` generates specs/<name>/spec.md with verifiable acceptance criteria and asks
   clarifying questions instead of writing code;
-- `/plan` turns the spec into steps with files, risks, and an out-of-scope guard;
-- `/commit` writes a conventional commit from the staged diff and refuses when nothing is staged.
+- `/harness:plan` turns the spec into steps with files, risks, and an out-of-scope guard;
+- `/harness:commit` writes a conventional commit from the staged diff and refuses when nothing is staged.
 
 ### Step 2.5 — Triggering test
 
@@ -500,7 +501,7 @@ Criterion: 0.5–1 day of manual work, touching DB + logic + API. CraftPlan exam
 **surface finishing: for each part — which edges get finished, with which finish type,
 plus per-type totals in meters on the order card.**
 
-### Step 5.2 — `/spec edge-finishing`
+### Step 5.2 — `/harness:spec edge-finishing`
 
 The command generates a draft. Your senior job is to review the spec. What a FINISHED
 spec looks like:
@@ -548,7 +549,7 @@ per order, errors in 1 of 5. Finishing must be computed automatically.
 Spec-review rule: every acceptance criterion converts to a test mechanically.
 If it doesn't — rewrite it.
 
-### Step 5.3 — `/plan edge-finishing`
+### Step 5.3 — `/harness:plan edge-finishing`
 
 Review the plan. Look for: (a) tests before implementation; (b) the migration as a
 separate step and commit; (c) an out-of-scope guard — files that must NOT change;
@@ -558,7 +559,7 @@ from a bad plan takes an hour.
 ### Step 5.4 — Implement
 
 ```
-Execute plan.md step by step. After every step: go test ./... and a commit via /commit.
+Execute plan.md step by step. After every step: go test ./... and a commit via /harness:commit.
 If a step requires deviating from the plan — STOP and ask me.
 ```
 
@@ -583,11 +584,11 @@ it's to KNOW yours and watch the trend.
 
 ```markdown
 ## Divergences spec ↔ implementation
-1. The spec missed qty>1 in totals → caught at verify → add a quantity-fields prompt to the /spec template
-2. The plan missed sqlc regeneration after a new query → implementer got stuck → add a "codegen" step to the /plan template
+1. The spec missed qty>1 in totals → caught at verify → add a quantity-fields prompt to the /harness:spec template
+2. The plan missed sqlc regeneration after a new query → implementer got stuck → add a "codegen" step to the /harness:plan template
 ## Harness changes
-- [ ] update .claude/commands/spec.md
-- [ ] update .claude/commands/plan.md
+- [ ] update .claude/commands/harness/spec.md
+- [ ] update .claude/commands/harness/plan.md
 ```
 
 Every retro fix makes the NEXT feature cheaper — that's the harness compounding effect.
@@ -796,9 +797,9 @@ the CI agent **comments, never merges**. Trust is grown gradually.
 
 A product built THROUGH the harness — proof of the full cycle:
 
-1. `/spec devdigest` — a recurring digest of repo activity: commits, PRs, open questions
+1. `/harness:spec devdigest` — a recurring digest of repo activity: commits, PRs, open questions
    from fanout/retro logs → markdown to chat/email.
-2. `/plan devdigest` → implement via subagents → verify → hooks and plan-verifier fire
+2. `/harness:plan devdigest` → implement via subagents → verify → hooks and plan-verifier fire
    along the way.
 3. Deploy: a scheduler (managed cron or GitHub Actions schedule) runs a headless
    `claude -p` that assembles the digest.
@@ -813,7 +814,7 @@ has an adoption metric and a rollback criterion — advance on evidence:
 | Stage | What we enable | Adoption metric | Roll back if |
 |---|---|---|---|
 | 1 | CLAUDE.md + skills | perception audit ≥8/10 for everyone | wrong-advice complaints > 2/wk |
-| 2 | hooks + /spec /plan /commit | 100% of PRs have a spec | hooks false-block > 1/day |
+| 2 | hooks + /harness:spec /harness:plan /harness:commit | 100% of PRs have a spec | hooks false-block > 1/day |
 | 3 | CI agent (comments only) | ≥50% of its remarks deemed valid | noise > signal |
 | 4 | subagents + evals baseline | pass rate ≥ 15/20 | cost/feature grew vs stage 1 |
 

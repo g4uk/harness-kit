@@ -92,9 +92,10 @@ project-specific denial:
 echo "$CMD" | grep -qE 'goose.*down' && deny "goose down by hand only — no silent local data loss"
 ```
 
-### 0.5 — Slash commands `/spec`, `/plan`, `/commit`, `/retro`
+### 0.5 — Slash commands `/harness:spec`, `/harness:plan`, `/harness:commit`, `/harness:retro`
 
-All shipped by the kit. `/retro` is the greenfield-critical one:
+All shipped by the kit under the `harness:` namespace (so they don't collide with other
+installed plugins). `/harness:retro` is the greenfield-critical one:
 
 ```markdown
 Feature $ARGUMENTS is merged. Do:
@@ -124,7 +125,7 @@ a different layer (the kit protects agent actions, not your own hands on the key
 The first "feature" isn't the configurator or the render — it's an **end-to-end tracer**:
 the thinnest slice of the system that crosses every layer and deploys.
 
-### 1.1 — `/spec walking-skeleton`
+### 1.1 — `/harness:spec walking-skeleton`
 
 Scope for CraftPlan: `POST /projects` + `GET /projects/{id}` (client_name only),
 companies+projects tables with a migration, tenant middleware (company_id from a header
@@ -134,7 +135,7 @@ curl against the prod URL creates and reads a project; a request with another co
 Non-scope is the most important section in the project's life: configurator, auth,
 frontend, render — all NO. The skeleton must be boring.
 
-### 1.2 — `/plan` → implement → verify
+### 1.2 — `/harness:plan` → implement → verify
 
 The full playbook cycle, including the CI file (a plain test+lint workflow; add the
 plan-verifier from the kit's ci/ here too — on greenfield it exists from PR #1, and no PR
@@ -152,8 +153,8 @@ skeleton", not "assembling the system".
 uncomment later. `evals/run.sh` reads `EVAL_MIN_TRACES` (the workflow sets it to 6,
 matching Stage 3's own "first baseline" threshold) and exits instantly — before touching
 docker or the API key — whenever `evals/traces/` has fewer traces than that. Below the
-threshold, `/retro` commits push and nothing runs (no API $ spent on a baseline with only
-one or two traces to compare against); once `/retro` pushes the count past it, real runs
+threshold, `/harness:retro` commits push and nothing runs (no API $ spent on a baseline with only
+one or two traces to compare against); once `/harness:retro` pushes the count past it, real runs
 just start happening. `gh workflow run harness-evals` (`workflow_dispatch`) always runs for
 real regardless of count, if you want to sanity-check it sooner.
 
@@ -174,7 +175,7 @@ specifically so this is diagnosable from the CI log instead of a bare `turns=? c
 Each feature = a sliver of value through every layer, not "all the DB first, then all the
 API". A CraftPlan order: `params-model` (product parameter schema + validation) →
 `parts-generation` (params → parts list, the heart of the product) → `materials-catalog` →
-the first configurator screen. Each — through `/spec → /plan → implement → /verify → /retro`.
+the first configurator screen. Each — through `/harness:spec → /harness:plan → implement → /harness:verify → /harness:retro`.
 
 ### 2.2 — The rule against greenfield's main risk
 
@@ -192,7 +193,7 @@ And check it at verify: "list the diff files that no plan step requires".
 
 ### 2.3 — Skills are born from retro, not upfront
 
-Don't write skills on day zero — there's nothing to put in them. After 2-3 features, /retro
+Don't write skills on day zero — there's nothing to put in them. After 2-3 features, /harness:retro
 will start repeating the same fixes → that's the moment to extract a skill. Typically the
 same three appear: `go-testing`, `code-review`, `db-migrations` — but filled with YOUR real
 cases, not theory.
@@ -203,7 +204,7 @@ metrics.md from feature #0. On greenfield add a **LOC diff** column — watch th
 $/feature to feature size. If cost grows feature-over-feature at constant size — the
 context is silting up, CLAUDE.md has sprawled, or the YAGNI gate is leaking.
 
-Use `/log-metrics` to fill the row: it reads tokens/$/duration from `/cost` (`/usage` is
+Use `/harness:log-metrics` to fill the row: it reads tokens/$/duration from `/cost` (`/usage` is
 the same command) already in the conversation, computes LOC diff via `git diff --shortstat`,
 and only asks you for First-pass?/Human min/Note. For this to give a clean per-feature
 number, `/clear` between features and check `claude --version` first — `/clear` only resets
@@ -212,7 +213,7 @@ the cost counter on Claude Code CLI **v2.1.211+**; on older versions cost accumu
 other.
 
 **Exit:** 3-5 features merged through the full cycle; at least one skill and one template
-improvement produced by /retro; cost per feature known, not guessed.
+improvement produced by /harness:retro; cost per feature known, not guessed.
 
 ---
 
@@ -227,7 +228,7 @@ feature → the full pipeline; edits to fresh code → a monolith session (the c
 
 ### 3.2 — Evals have accumulated by themselves
 
-After ~6-8 features, evals/traces/ holds 6-8 traces from /retro — past `EVAL_MIN_TRACES`
+After ~6-8 features, evals/traces/ holds 6-8 traces from /harness:retro — past `EVAL_MIN_TRACES`
 (6, see 1.4), so `ci/harness-evals.yml`'s already-active triggers stop self-skipping and
 start actually running on every relevant push/PR, no edits needed. Take that first run as
 the baseline. From this moment: **changing CLAUDE.md or a skill without an eval run =
@@ -270,9 +271,9 @@ not the one writing.
 
 ## Checklist
 
-- [ ] S0: decisions.md · skeleton · CLAUDE.md v0 · 4 hooks · /spec /plan /commit /retro · **harness committed before product code**
+- [ ] S0: decisions.md · skeleton · CLAUDE.md v0 · 4 hooks · /harness:spec /harness:plan /harness:commit /harness:retro · **harness committed before product code**
 - [ ] S1: walking skeleton deployed · CI + plan-verifier from PR #1 · trace #0
-- [ ] S2: 3-5 features as vertical slices · YAGNI gate in CLAUDE.md · /retro after EVERY merge · skills born from retro · metrics with the LOC column
+- [ ] S2: 3-5 features as vertical slices · YAGNI gate in CLAUDE.md · /harness:retro after EVERY merge · skills born from retro · metrics with the LOC column
 - [ ] S3: 5 subagents + dispatch · evals baseline from accumulated traces · MCP at the first external state + token audit
 - [ ] S4: fan-out on the first mechanical migration · plugin at the second person/repo · recurring digest
 
@@ -280,7 +281,7 @@ not the one writing.
 
 1. **The harness is commit #1.** Gates are cheap while there's no code and priceless when
    the code isn't written by you.
-2. **Every merge feeds the harness.** /retro after every feature: divergences → template
+2. **Every merge feeds the harness.** /harness:retro after every feature: divergences → template
    fixes, conventions → CLAUDE.md, acceptance → a trace. A project whose harness doesn't
    grow with the code reverts to vibe-coding within a month.
 3. **YAGNI, stricter than without agents.** An agent generates architecture cheaply; you

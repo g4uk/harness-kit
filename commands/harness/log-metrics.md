@@ -37,7 +37,7 @@ asking.
    recent commit messages) rather than asking, unless genuinely unclear.
 
 4. Ask me only for the fields that require judgment:
-   - **First-pass?** — did `/verify` pass on the first attempt, yes/no
+   - **First-pass?** — did `/harness:verify` pass on the first attempt, yes/no
    - **Human min** — roughly how many minutes I spent reviewing/steering
    - **Note** — one line: what stood out, in my own words
 

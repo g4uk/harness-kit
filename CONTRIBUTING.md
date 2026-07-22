@@ -11,7 +11,7 @@ A PR opened without these passing locally will just fail the same checks in CI.
 
 ## Commit messages
 
-Conventional commits, same as the kit's own /commit command enforces:
+Conventional commits, same as the kit's own /harness:commit command enforces:
 `type(scope): description` — feat / fix / docs / test / chore / refactor.
 The kit should be developed the way it tells users to develop.
 

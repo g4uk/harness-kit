@@ -57,19 +57,29 @@ else
   COPY_CMD="cp -n"  # Don't overwrite on fresh install
 fi
 
-mkdir -p "$DST"/{skills,agents,commands,hooks}
+mkdir -p "$DST"/{skills,agents,commands/harness,hooks}
 if [ "$COPY_CMD" = "cp" ]; then
   cp -r "$SRC"/skills/* "$DST/skills/" 2>/dev/null || true
   cp "$SRC"/agents/* "$DST/agents/" 2>/dev/null || true
-  cp "$SRC"/commands/* "$DST/commands/" 2>/dev/null || true
+  cp "$SRC"/commands/harness/* "$DST/commands/harness/" 2>/dev/null || true
   cp "$SRC"/hooks/*.sh "$DST/hooks/" 2>/dev/null || true
 else
   cp -r "$SRC"/skills/* "$DST/skills/"
   cp "$SRC"/agents/* "$DST/agents/"
-  cp "$SRC"/commands/* "$DST/commands/"
+  cp "$SRC"/commands/harness/* "$DST/commands/harness/"
   cp "$SRC"/hooks/*.sh "$DST/hooks/"
 fi
 chmod +x "$DST"/hooks/*.sh
+
+# v1.8 migration: commands moved from .claude/commands/*.md (bare /spec,
+# /plan, ...) to .claude/commands/harness/*.md (/harness:spec, /harness:plan,
+# ... — namespaced so they don't collide with other installed plugins). Clean
+# up the old flat files so they don't linger as dead duplicates.
+if [ "$UPDATE_MODE" = true ]; then
+  for f in spec plan commit verify retro feature onboard log-metrics; do
+    [ -f "$DST/commands/$f.md" ] && rm -f "$DST/commands/$f.md"
+  done
+fi
 
 if [ ! -f "$DST/settings.json" ]; then
   cp "$SRC/settings/settings.project.json" "$DST/settings.json"

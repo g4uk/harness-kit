@@ -1,10 +1,10 @@
-# harness-kit v1.7
+# harness-kit v1.8
 
 A shared harness core for three Claude Code working scenarios.
 Progression is gated by evidence (exit criteria per stage), not by a calendar.
 
 ## Requirements
-- **docker** (mandatory for eval runs). Policy: the agent's own run always executes in the harness-runner sandbox; checks (base check + trace `cmd:`, human-approved via `/retro`) do too by default, but run directly on the host when `HARNESS_EVAL_CHECKS_HOST=1` — set by `ci/harness-evals.yml` for GitHub Actions (already an isolated, single-job VM with a native Docker daemon), opt-in for any other CI. See `evals/run.sh`.
+- **docker** (mandatory for eval runs). Policy: the agent's own run always executes in the harness-runner sandbox; checks (base check + trace `cmd:`, human-approved via `/harness:retro`) do too by default, but run directly on the host when `HARNESS_EVAL_CHECKS_HOST=1` — set by `ci/harness-evals.yml` for GitHub Actions (already an isolated, single-job VM with a native Docker daemon), opt-in for any other CI. See `evals/run.sh`.
 - **bash** + **jq** (for guard.sh and local orchestration).
   - macOS: `brew install jq docker`
   - Linux: `apt install jq` + install Docker from docker.io
@@ -14,7 +14,9 @@ Progression is gated by evidence (exit criteria per stage), not by a calendar.
 
 ## Structure
 ```
-commands/    /spec /plan /commit /verify /retro /feature /onboard /log-metrics
+commands/    harness/ namespace (avoids collisions with other installed plugins):
+             /harness:spec /harness:plan /harness:commit /harness:verify /harness:retro
+             /harness:feature /harness:onboard /harness:log-metrics
 agents/      researcher, test-writer, implementer, reviewer, doc-writer
              — model: per-role tier (routine work cheaper, implementer keeps primary)
 skills/      code-review, testing, db-migrations, frontend      ← EDIT_ME for your stack
@@ -42,7 +44,7 @@ VERSION      Kit version for update detection
 ## Security model (three layers)
 0. **container boundary** — the agent's own headless run always happens in the harness-runner
    sandbox (non-root user, dropped capabilities, resource limits, throwaway mounts). Checks
-   (human-approved via `/retro`, not agent-authored) do too by default; `HARNESS_EVAL_CHECKS_HOST=1`
+   (human-approved via `/harness:retro`, not agent-authored) do too by default; `HARNESS_EVAL_CHECKS_HOST=1`
    (set for GitHub Actions in `ci/harness-evals.yml`) runs them directly on an already-isolated
    CI runner instead — see `evals/run.sh`.
 1. **permissions in settings.json — deny-by-default.** Only the allow-list is permitted.
@@ -69,11 +71,11 @@ See `examples/craftplan-*.md` for a complete spec → plan → retro cycle in on
 Takes ~2 minutes to read; shows the full harness pattern in miniature.
 
 ## Invariants
-1. perceive → spec → plan → implement → verify (/verify is a command, not a mood).
+1. perceive → spec → plan → implement → verify (/harness:verify is a command, not a mood).
 2. Safety lives in permissions+hooks, not prompts. A prompt is a wish; a gate is a guarantee.
-3. A subagent returns a condensed result; small tasks skip subagents (/feature declines them itself).
+3. A subagent returns a condensed result; small tasks skip subagents (/harness:feature declines them itself).
 4. Metrics from day one: /cost → the log. Deliberately manual — numbers without your judgment are dead.
-5. /retro after every merge: divergences → templates, conventions → CLAUDE.md, criteria → a trace.
+5. /harness:retro after every merge: divergences → templates, conventions → CLAUDE.md, criteria → a trace.
 6. A change to .claude/** or CLAUDE.md doesn't merge without green evals — now a CI gate, not a wish.
 
 ## How the scenarios differ
@@ -82,7 +84,7 @@ Takes ~2 minutes to read; shows the full harness pattern in miniature.
 | CLAUDE.md is written from | decisions (decisions.md) | verified facts (CLAUDE.local) | perception-gap audit |
 | Gates | commit #1 | user-level immediately; in repo — after the trust gate | quality-gates stage |
 | Install level | .claude/ in repo | ~/.claude | .claude/ in repo |
-| Evals | grow via /retro | after legitimization | 20 traces from done tasks |
+| Evals | grow via /harness:retro | after legitimization | 20 traces from done tasks |
 
 ## Where this sits on the vibe coding ↔ agentic engineering spectrum
 The differentiator between the two isn't whether an agent is used — it's how the
@@ -90,7 +92,7 @@ output gets verified. Casual prompting with "does it seem to work" is one end;
 formal specs + automated evals + CI gates is the other. This kit is built for the
 disciplined end, but not every task on a project needs to sit there:
 - **Prototypes, throwaway scripts, exploring an unfamiliar API** — vibe coding is the
-  right speed. Don't route these through /spec → /plan → evals; that's friction
+  right speed. Don't route these through /harness:spec → /harness:plan → evals; that's friction
   without payoff for code nobody will run twice.
 - **Anything merging into a shared branch** — the kit's gates apply: spec before
   code (invariant #1), hooks over prompts for safety (invariant #2), green evals
@@ -111,6 +113,28 @@ Per-trace trajectory/cost and PASS/FAIL stream to the console as each trace runs
 (`tee`d to the results file too) — nothing about a run is only visible after the
 fact by opening `evals/results/*.md`; that file exists for the durable record
 and CI logs, not as the only place to see what happened.
+
+## Changelog v1.8 (BREAKING: commands namespaced under harness:)
+- **All 8 kit commands moved from `.claude/commands/*.md` to
+  `.claude/commands/harness/*.md`** — Claude Code namespaces commands by
+  subdirectory with colon syntax, so `/spec` is now `/harness:spec`, and
+  likewise `/harness:plan`, `/harness:commit`, `/harness:verify`,
+  `/harness:retro`, `/harness:feature`, `/harness:onboard`,
+  `/harness:log-metrics`. Reason: bare names like `/plan` or `/verify`
+  collide with (or are ambiguous against) commands from other installed
+  plugins/marketplaces — no way to tell which one just ran.
+- **No bare-name alias** — Claude Code doesn't support one; this is a
+  breaking change for anyone with muscle memory for the old names.
+- `install.sh --update` migrates existing installs automatically: copies the
+  new namespaced files into `commands/harness/` and deletes the old flat
+  files at `commands/*.md` if present, so nothing lingers as a dead
+  duplicate. Verified both a fresh install and an update-from-old-flat-layout
+  install produce the same clean `commands/harness/*.md` result.
+- All cross-references between commands (`feature.md`'s own pipeline steps),
+  and every doc that told you to type one of these (`README.md`,
+  `scenarios/*.md`, `docs/*.md`, `CONTRIBUTING.md`, `extras/harness-dashboard.jsx`)
+  updated to the namespaced form. Historical `## Changelog` entries below
+  this one are left as-is — they're a record of what was true when written.
 
 ## Changelog v1.7.3 (/log-metrics: read tokens from the session transcript, don't ask)
 - **FIX**: step 1 asked the user to manually run `/cost`/`/usage` and paste

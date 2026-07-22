@@ -48,7 +48,7 @@
 
 ## Effort estimate
 - 9 hours planned; actual often 12–15 (async debugging, schema tweaks).
-- Tokens: ~80k per /spec + /plan + /implement cycles (estimate).
+- Tokens: ~80k per /harness:spec + /harness:plan + implement cycles (estimate).
 
 ## Risks & Mitigations
 | Risk | Mitigation |

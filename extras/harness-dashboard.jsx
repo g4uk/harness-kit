@@ -21,7 +21,7 @@ const SCENARIOS = {
       {
         title: "Stage 1 — Walking skeleton",
         items: [
-          "Feature #0: end-to-end slice deployed (/spec → /plan → /verify)",
+          "Feature #0: end-to-end slice deployed (/harness:spec → /harness:plan → /harness:verify)",
           "CI + plan-verifier from PR #1",
           "Trace #0 in evals/traces/",
         ],
@@ -30,7 +30,7 @@ const SCENARIOS = {
         title: "Stage 2 — Vertical slices",
         items: [
           "3–5 features as vertical slices only",
-          "/retro after EVERY merge",
+          "/harness:retro after EVERY merge",
           "Skills born from retro repeats",
           "metrics.md with a LOC diff column",
         ],
@@ -131,7 +131,7 @@ const SCENARIOS = {
       {
         title: "Stage 3 — Quality gates",
         items: [
-          "Feature through the full cycle + cost.md + /retro",
+          "Feature through the full cycle + cost.md + /harness:retro",
           "3 hooks hand-tested (exit 2!)",
           "plan-verifier in CI",
           "20 traces + baseline; mutation report",
@@ -153,7 +153,7 @@ const INVARIANTS = [
   "Safety lives in hooks (exit 2), not prompts. A prompt is a wish; a hook is a guarantee.",
   "A subagent returns a condensed result. Small tasks skip subagents.",
   "Metrics from day one: /cost → the log. Without numbers, decisions are religion.",
-  "/retro after every merge feeds CLAUDE.md, templates, and evals.",
+  "/harness:retro after every merge feeds CLAUDE.md, templates, and evals.",
   "Changing CLAUDE.md/skills without an eval run = code without tests.",
 ];
 

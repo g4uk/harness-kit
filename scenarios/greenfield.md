@@ -10,7 +10,7 @@ whether that takes a day or a month.
 - [ ] CLAUDE.md from templates/CLAUDE.md.template — derived from decisions, including the YAGNI gate
 - [ ] docs/metrics.md from the template
 
-Run `/onboard` after install to generate the three files above interactively
+Run `/harness:onboard` after install to generate the three files above interactively
 (it asks which to create, then walks decisions/CLAUDE.md/metrics questions) —
 or write them by hand from the templates if you prefer.
 
@@ -20,7 +20,7 @@ Run the smoke test by asking Claude in chat to run the forbidden command (e.g. "
 own tool; it can't see you typing the same command yourself in a terminal.
 
 ## Stage 1 — Walking skeleton
-- [ ] Feature #0 = the thinnest end-to-end slice, deployed. Via /spec → /plan → implement → /verify
+- [ ] Feature #0 = the thinnest end-to-end slice, deployed. Via /harness:spec → /harness:plan → implement → /harness:verify
 - [ ] CI (test+lint) + plan-verifier from PR #1
 
 **Exit:** a request hits production and comes back; CI is green; trace #0 exists in evals/.
@@ -33,15 +33,15 @@ container, no error shown. (Only matters once `harness-evals` actually runs for 
 see Stage 3: below the trace threshold it self-skips before touching the API key at all.)
 
 ## Stage 2 — Vertical slices
-- [ ] Features shipped as vertical slices only; /retro after EVERY merge
+- [ ] Features shipped as vertical slices only; /harness:retro after EVERY merge
 - [ ] Skills filled from retro repeats, not upfront
-- [ ] metrics.md tracks $/feature and LOC diff — `/log-metrics` fills tokens/$/duration from
+- [ ] metrics.md tracks $/feature and LOC diff — `/harness:log-metrics` fills tokens/$/duration from
       `/cost` (or `/usage`, same command) and computes LOC diff via git; `/clear` resets the
       cost counter only on Claude Code CLI v2.1.211+ (check `claude --version` — below that,
       cost accumulates across `/clear` for the process lifetime, so per-feature $ is unreliable)
 
 **Exit:** 3-5 features merged through the full cycle; at least one skill and one template
-improvement produced by /retro; cost per feature is known, not guessed.
+improvement produced by /harness:retro; cost per feature is known, not guessed.
 
 ## Stage 3 — Agents & evals
 - [ ] Subagents — trigger: researcher becomes useful (roughly 15-20 logic files)
@@ -51,7 +51,7 @@ improvement produced by /retro; cost per feature is known, not guessed.
 `ci/harness-evals.yml`'s `pull_request`/`push` triggers are always on — no manual
 uncommenting needed. `evals/run.sh` self-adjusts instead: `EVAL_MIN_TRACES` (set to 6 in
 the workflow) makes it exit instantly, before touching docker or the API key, whenever
-`evals/traces/` has fewer traces than that. Once `/retro` pushes the count past the
+`evals/traces/` has fewer traces than that. Once `/harness:retro` pushes the count past the
 threshold, real runs simply start happening — nothing to edit. Force a real run earlier
 via `gh workflow run harness-evals` (uses `workflow_dispatch`, ignores the trace count) if
 you want to sanity-check it before then.
@@ -65,4 +65,4 @@ eval baseline recorded.
 - [ ] recurring digest from an agent
 
 ## Rules
-1. Harness is commit #1. 2. Every merge feeds the harness (/retro). 3. YAGNI stricter than without agents.
+1. Harness is commit #1. 2. Every merge feeds the harness (/harness:retro). 3. YAGNI stricter than without agents.
