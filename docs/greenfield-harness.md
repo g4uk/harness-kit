@@ -100,10 +100,13 @@ installed plugins). `/harness:retro` is the greenfield-critical one:
 ```markdown
 Feature $ARGUMENTS is merged. Do:
 1. Compare specs/$ARGUMENTS/spec.md with the final implementation — list divergences
-2. For each: a gap in the spec template, the plan, or CLAUDE.md? Propose the fix
+2. For each: a gap in the spec template, the plan, CLAUDE.md, or an existing
+   skill (skills/*/SKILL.md)? Propose the fix
 3. Create harness/evals/traces/NNN-$ARGUMENTS.md: prompt = the feature in one paragraph,
    checks = 3-4 verifiable criteria from the acceptance criteria
-4. If a new convention emerged — propose a CLAUDE.md line
+4. New convention: a fact (applies regardless of task) → CLAUDE.md line. A
+   procedure scoped to one skill's domain → that skill's SKILL.md instead —
+   CLAUDE.md loads every session, a skill loads only when relevant.
 Show me everything for approval; commit nothing yourself.
 ```
 
