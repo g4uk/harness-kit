@@ -215,7 +215,8 @@ description: >
 
 Same pattern:
 - `.claude/skills/code-review/SKILL.md` — review criteria: tenant filter in every query,
-  N+1 in loops with DB calls, error wrapping, handler size, no logic in generated code.
+  N+1 in loops with DB calls, error wrapping, handler size, no logic in generated code,
+  new imports checked against go.mod (agents hallucinate plausible-sounding packages).
   Description: "Use when reviewing code, examining a diff, or before creating a PR".
 - `.claude/skills/db-migrations/SKILL.md` — naming, mandatory down, backward-compatible
   changes (add column nullable → backfill → NOT NULL as a separate migration), no `DROP`
