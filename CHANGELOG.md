@@ -2,6 +2,23 @@
 
 Version history for harness-kit. See README.md for current structure and usage.
 
+## v1.9.1 (retro: route conventions to the matching skill, not just CLAUDE.md)
+- **FIX**: `/harness:retro`'s only routing target for a newly discovered
+  convention was CLAUDE.md — skills weren't mentioned at all, even though
+  `docs/harness-playbook.md`'s own onboarding module already states the
+  principle ("Fact → CLAUDE.md. Procedure → Skill... CLAUDE.md is loaded into
+  EVERY session. A Skill loads only when relevant."). Verified against
+  `examples/craftplan-retro.md`'s own divergence #3 (a goose migration naming
+  rule that had gone into CLAUDE.md under the old wording) — it matches
+  `skills/db-migrations/SKILL.md`'s description and now routes there instead.
+  `commands/harness/retro.md` and its mirror in `docs/greenfield-harness.md`
+  updated.
+- **`skills/code-review/SKILL.md`**: added a Blockers item for hallucinated
+  dependencies — agents can invent plausible-sounding package names, which an
+  attacker can later register (slopsquatting). Eval-trace compile checks catch
+  this indirectly, but not every PR has a trace yet. `docs/harness-playbook.md`'s
+  illustrative skills-walkthrough synced to match.
+
 ## v1.9 (BREAKING: docker/ and evals/ move under harness/)
 - **`docker/` and `evals/` (in installed projects) move to `harness/docker/`
   and `harness/evals/`** — a project's own product can reasonably have its
