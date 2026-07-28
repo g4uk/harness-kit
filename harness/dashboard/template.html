@@ -137,7 +137,7 @@ body { margin: 0; }
 </head>
 <body>
 <div id="root"></div>
-<script type="text/babel" data-presets="react">
+<script type="text/plain" id="hk-source">
 const { useState } = React;
 
 /* Filled in at build time by build/dashboard.sh from docs/metrics.md.
@@ -642,6 +642,27 @@ function App() {
 }
 
 ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+<script>
+  /* Transform + run the JSX above manually, instead of relying on Babel
+     Standalone's own <script type="text/babel"> auto-scan: recent versions
+     of that scanner insert the transformed code as type="module", and
+     module scripts refuse to run at all from a file:// origin ("file: URLs
+     are treated as unique security origins" — a Chrome restriction, not
+     something this page's own code triggers). Calling Babel.transform()
+     directly and injecting a plain classic script sidesteps that path. */
+  (function () {
+    var src = document.getElementById("hk-source").textContent;
+    /* runtime: "classic" — the default "automatic" runtime compiles JSX to
+       calls that need `import ... from "react/jsx-runtime"`, which breaks
+       a classic (non-module) script. "classic" compiles to
+       React.createElement(...) instead, using the global React from the
+       CDN script — no import needed. */
+    var out = Babel.transform(src, { presets: [["react", { runtime: "classic" }]] }).code;
+    var s = document.createElement("script");
+    s.textContent = out;
+    document.body.appendChild(s);
+  })();
 </script>
 </body>
 </html>
