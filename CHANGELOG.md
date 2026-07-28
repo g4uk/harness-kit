@@ -2,6 +2,47 @@
 
 Version history for harness-kit. See README.md for current structure and usage.
 
+## v1.9.2 (dashboard: build-time tool reading docs/metrics.md, not a pasted artifact)
+- **Replaced `extras/harness-dashboard.jsx`** (paste-into-Claude.ai-artifact,
+  metrics typed by hand into a form disconnected from the real
+  `docs/metrics.md`) with `harness/dashboard/template.html` +
+  `build/dashboard.sh [path]` → `dist/dashboard.html`: parses the project's
+  own `docs/metrics.md` table at build time, no server, open the file
+  directly in a browser. `install.sh` now ships both to every installed
+  project (shipped neither before). Default view is Performance (cost/
+  first-pass-rate/human-minutes trends, first-half-vs-second-half
+  retro-compounding comparison, full entry table); the scenario checklists
+  move to a secondary tab. Dropped the manual "add metric" form — it wrote
+  only to the browser's local storage, a second copy of the same data that
+  could drift from the file.
+- **FIX**: invariant #2 in the reference panel omitted permissions
+  ("Safety lives in hooks...") — README's own Security model calls
+  permissions the primary layer, hooks secondary.
+- **FIX**: `build/dashboard.sh` previously appended a dead
+  `exportMetricsAsMarkdown()` reading a `localStorage` key the app never
+  wrote to, called from no UI element.
+- **FIX (found live in the browser, not just by inspection)**: opening the
+  built HTML via `file://` threw "Cannot use import statement outside a
+  module" and Chrome's "file: URLs are treated as unique security origins".
+  Root cause: Babel Standalone's `<script type="text/babel">` auto-scanner
+  inserts its output as a module script (file:// refuses those outright),
+  and separately Babel's `"react"` preset defaults to the "automatic" JSX
+  runtime, which needs a literal `import ... from "react/jsx-runtime"` —
+  exactly what both errors were about. Fixed by calling `Babel.transform()`
+  manually with `runtime: "classic"` (compiles to `React.createElement`
+  against the global `React` from the CDN script) and injecting the result
+  as a plain script myself, bypassing the auto-scanner entirely.
+- Verified: parses real data from kumite-analyzer's `docs/metrics.md`
+  correctly; handles a project with no `docs/metrics.md` yet; a synthetic
+  row with quotes/backslash/ampersand round-trips through valid JSON (two
+  more bugs caught this way — a stray `.` from naive cost-string stripping,
+  and `awk -v` silently re-interpreting backslash escapes in already-escaped
+  JSON, fixed via `ENVIRON` instead); the compiled component renders real
+  DOM output under jsdom + actual React 18, not just "no crash"; a fresh
+  `install.sh` run copies and runs the dashboard build end-to-end in a
+  scratch project; confirmed working in an actual browser after the
+  file:// fix.
+
 ## v1.9.1 (retro: route conventions to the matching skill, not just CLAUDE.md)
 - **FIX**: `/harness:retro`'s only routing target for a newly discovered
   convention was CLAUDE.md — skills weren't mentioned at all, even though
