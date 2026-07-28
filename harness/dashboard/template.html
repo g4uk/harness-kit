@@ -15,7 +15,8 @@ body { margin: 0; }
 
 .hk-root {
   --paper:#E8EAE2; --card:#F6F7F1; --ink:#22261F; --dim:#6A7060;
-  --line:#C7CCBB; --tape:#D99A06; --tape-soft:#F3D488; --ok:#4A7351; --bad:#A2402E;
+  --line:#C7CCBB; --tape:#D99A06; --tape-soft:#F3D488; --ok:#1E8449; --bad:#A2402E;
+  --series2:#2A78D6;
   --ply1:#DBC69C; --ply2:#B99B69;
   min-height:100vh; background:var(--paper); color:var(--ink);
   font-family:'Archivo',system-ui,sans-serif; font-stretch:87%;
@@ -89,6 +90,23 @@ body { margin: 0; }
 .hk-fp-dot { width:14px; height:14px; border:1px solid var(--ink); flex:none; }
 .hk-fp-dot.yes { background:var(--ok); }
 .hk-fp-dot.no { background:var(--bad); }
+
+/* performance: cost-vs-minutes scatter */
+.hk-scatter-wrap { padding:10px 12px 0; }
+.hk-scatter { width:100%; height:auto; display:block; }
+.hk-axis { stroke:var(--line); stroke-width:1; }
+.hk-axis-label { fill:var(--dim); font-family:'IBM Plex Mono',monospace; font-size:9px; }
+.hk-line { fill:none; stroke-width:2; }
+.hk-line-cost { stroke:var(--tape); }
+.hk-line-mins { stroke:var(--series2); }
+.hk-vertex { stroke:var(--card); stroke-width:2; }
+.hk-vertex-cost { fill:var(--tape); }
+.hk-vertex-mins { fill:var(--series2); }
+.hk-legend { display:flex; gap:14px; padding:8px 12px 12px; font-size:11.5px; color:var(--dim); }
+.hk-legend-item { display:flex; align-items:center; gap:5px; }
+.hk-legend-line { width:14px; height:0; border-top:2px solid; flex:none; }
+.hk-legend-line-cost { border-color:var(--tape); }
+.hk-legend-line-mins { border-color:var(--series2); }
 
 /* performance: first-half vs second-half */
 .hk-cmp { display:flex; align-items:center; gap:14px; padding:14px 12px; }
@@ -351,6 +369,88 @@ function summarize(rows) {
   };
 }
 
+function IndexedTrend({ data }) {
+  const points = data.filter((m) => m.cost > 0);
+  if (points.length < 2) return null;
+
+  const W = 480,
+    H = 220,
+    PAD_L = 34,
+    PAD_R = 14,
+    PAD_T = 14,
+    PAD_B = 26;
+  const innerW = W - PAD_L - PAD_R;
+  const innerH = H - PAD_T - PAD_B;
+  const maxCost = Math.max(...points.map((m) => m.cost));
+  const maxMins = Math.max(...points.map((m) => m.mins), 1);
+  const n = points.length;
+  const stepX = n > 1 ? innerW / (n - 1) : 0;
+  const xAt = (i) => PAD_L + i * stepX;
+  const yAt = (pct) => PAD_T + innerH - (pct / 100) * innerH;
+
+  const costPts = points.map((m, i) => [xAt(i), yAt((m.cost / maxCost) * 100)]);
+  const minsPts = points.map((m, i) => [xAt(i), yAt((m.mins / maxMins) * 100)]);
+  const path = (pts) => pts.map(([px, py], i) => (i === 0 ? "M" : "L") + px.toFixed(1) + "," + py.toFixed(1)).join(" ");
+
+  return (
+    <section className="hk-phase">
+      <h2 className="hk-phase-head">
+        <span>Cost &amp; human minutes, indexed</span>
+        <span className="hk-mono hk-phase-count">each series % of its own max — one shared axis</span>
+      </h2>
+      <div className="hk-scatter-wrap">
+        <svg
+          viewBox={`0 0 ${W} ${H}`}
+          className="hk-scatter"
+          role="img"
+          aria-label="Cost and human minutes per feature, each indexed to percent of its own maximum"
+        >
+          <line x1={PAD_L} y1={yAt(0)} x2={W - PAD_R} y2={yAt(0)} className="hk-axis" />
+          <line x1={PAD_L} y1={yAt(100)} x2={W - PAD_R} y2={yAt(100)} className="hk-axis" />
+          <text x={PAD_L - 6} y={yAt(0) + 3} textAnchor="end" className="hk-axis-label">
+            0%
+          </text>
+          <text x={PAD_L - 6} y={yAt(100) + 3} textAnchor="end" className="hk-axis-label">
+            100%
+          </text>
+          <path d={path(costPts)} className="hk-line hk-line-cost" />
+          <path d={path(minsPts)} className="hk-line hk-line-mins" />
+          {points.map((m, i) => (
+            <circle key={"c" + i} cx={costPts[i][0]} cy={costPts[i][1]} r="5" className="hk-vertex hk-vertex-cost">
+              <title>
+                {m.task}: ${m.cost.toFixed(2)}
+                {m.approxCost ? " (approx)" : ""}
+              </title>
+            </circle>
+          ))}
+          {points.map((m, i) => (
+            <circle key={"m" + i} cx={minsPts[i][0]} cy={minsPts[i][1]} r="5" className="hk-vertex hk-vertex-mins">
+              <title>
+                {m.task}: {m.mins}m
+              </title>
+            </circle>
+          ))}
+          {points.map((m, i) => (
+            <text key={"l" + i} x={xAt(i)} y={H - 8} textAnchor="middle" className="hk-axis-label">
+              {m.date.slice(5)}
+            </text>
+          ))}
+        </svg>
+      </div>
+      <div className="hk-legend">
+        <span className="hk-legend-item">
+          <span className="hk-legend-line hk-legend-line-cost" />
+          cost (max ${maxCost.toFixed(2)})
+        </span>
+        <span className="hk-legend-item">
+          <span className="hk-legend-line hk-legend-line-mins" />
+          human min (max {Math.round(maxMins)}m)
+        </span>
+      </div>
+    </section>
+  );
+}
+
 function Performance({ data }) {
   if (data.length === 0) {
     return (
@@ -414,6 +514,8 @@ function Performance({ data }) {
           ))}
         </div>
       </section>
+
+      <IndexedTrend data={data} />
 
       <section className="hk-phase">
         <h2 className="hk-phase-head">
