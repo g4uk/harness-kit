@@ -33,12 +33,12 @@ harness/     installed at the project's harness/ (not root — avoids colliding 
   evals/       run.sh — Docker-only orchestrator; output eval (checks) + trajectory eval
                (turns/tools) + cost from the JSON transcript · traces/
   docker/      Dockerfile (harness-runner image) · claude-run.sh · exec.sh (container boundary)
+  dashboard/   template.html — performance dashboard, built from docs/metrics.md
 scenarios/   greenfield · onboarding · existing-own — checklist overlays
 docs/        full step-by-step guides the kit was distilled from
 examples/    craftplan-spec.md, plan.md, retro.md — complete spec→plan→retro cycle (learning reference)
-extras/      harness-dashboard.jsx — interactive progress tracker (Claude artifact)
 tests/       hooks.test.sh — guard.sh regression tests · runner-smoke.sh — eval runner self-test
-build/       dashboard.sh — generates artifact-ready version for offline use
+build/       dashboard.sh — bakes docs/metrics.md into harness/dashboard/template.html → dist/dashboard.html
 install.sh   → project .claude/ + harness/ (with settings and CI) or ~/.claude (--user)
 VERSION      Kit version for update detection
 ```
@@ -126,10 +126,12 @@ Full guides the kit is distilled from (all examples use CraftPlan, a fictional r
 - docs/greenfield-harness.md — starting a project from scratch, harness-first
 
 ## Extras
-- **harness-dashboard.jsx** — interactive checklist/metrics dashboard
-  (paste into a Claude.ai artifact; progress persists between sessions)
-  Build script: `./build/dashboard.sh` → `dist/harness-dashboard-artifact.jsx`
-  Export metrics to markdown for docs/metrics.md sync
+- **Performance dashboard** — `./build/dashboard.sh [path]` reads that project's
+  `docs/metrics.md`, bakes it into `dist/dashboard.html` (cost/first-pass-rate/
+  human-minutes trends, first-half-vs-second-half retro-compounding check, the
+  three scenario checklists as a secondary reference tab). No server, no
+  build tooling — open the file directly in a browser. Rebuild after logging
+  new entries with `/harness:log-metrics` to refresh it.
 
 ## License
 MIT — see LICENSE.

@@ -111,7 +111,7 @@ if [ "$UPDATE_MODE" = true ]; then
   fi
 fi
 
-mkdir -p "$REPO/docs" "$REPO/specs" "$REPO/harness/evals/traces" "$REPO/harness/evals/results" "$REPO/.github/workflows" "$REPO/harness/docker"
+mkdir -p "$REPO/docs" "$REPO/specs" "$REPO/harness/evals/traces" "$REPO/harness/evals/results" "$REPO/.github/workflows" "$REPO/harness/docker" "$REPO/harness/dashboard" "$REPO/build"
 if [ "$UPDATE_MODE" = true ]; then
   # Overwrite CI workflows on update
   cp "$SRC"/ci/harness-evals.yml "$REPO/.github/workflows/" 2>/dev/null || true
@@ -122,6 +122,9 @@ if [ "$UPDATE_MODE" = true ]; then
   chmod +x "$REPO/harness/evals/run.sh" 2>/dev/null || true
   cp "$SRC"/harness/docker/Dockerfile "$SRC"/harness/docker/claude-run.sh "$SRC"/harness/docker/exec.sh "$REPO/harness/docker/" 2>/dev/null || true
   chmod +x "$REPO"/harness/docker/claude-run.sh "$REPO"/harness/docker/exec.sh 2>/dev/null || true
+  cp "$SRC"/harness/dashboard/template.html "$REPO/harness/dashboard/template.html" 2>/dev/null || true
+  cp "$SRC"/build/dashboard.sh "$REPO/build/dashboard.sh" 2>/dev/null || true
+  chmod +x "$REPO/build/dashboard.sh" 2>/dev/null || true
 else
   # Fresh install: don't overwrite
   cp -n "$SRC"/ci/harness-evals.yml "$REPO/.github/workflows/" 2>/dev/null || true
@@ -135,6 +138,9 @@ else
   [ -f "$REPO/CLAUDE.md" ] || cp "$SRC/templates/CLAUDE.md.template" "$REPO/CLAUDE.md"
   cp -n "$SRC"/harness/docker/Dockerfile "$SRC"/harness/docker/claude-run.sh "$SRC"/harness/docker/exec.sh "$REPO/harness/docker/" 2>/dev/null || true
   chmod +x "$REPO"/harness/docker/claude-run.sh "$REPO"/harness/docker/exec.sh 2>/dev/null || true
+  cp -n "$SRC"/harness/dashboard/template.html "$REPO/harness/dashboard/template.html" 2>/dev/null || true
+  cp -n "$SRC"/build/dashboard.sh "$REPO/build/dashboard.sh" 2>/dev/null || true
+  chmod +x "$REPO/build/dashboard.sh" 2>/dev/null || true
 fi
 
 echo "$KIT_VERSION" > "$DST/VERSION"
