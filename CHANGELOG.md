@@ -2,6 +2,23 @@
 
 Version history for harness-kit. See README.md for current structure and usage.
 
+## v1.9.3 (dashboard: cost/minutes as indexed lines, not a dual-axis overlay)
+- Requested overlaying Cost per feature and Human minutes per feature on one
+  chart to see the relationship between them. A literal dual-axis overlay
+  (two y-scales, $ and minutes) is the #1 chart anti-pattern — the alignment
+  of two independent scales is arbitrary, so it can show a correlation that
+  isn't really in the data. Replaced with indexed line charts: cost and
+  human minutes each as % of their own max, on one shared 0–100% axis, so
+  peaks and dips can be compared without the two units ever sharing a
+  literal scale. Legend states each line's real max ($/m) so it can't be
+  misread as one shared unit.
+- Fixed the `--ok` green (was failing a chroma-floor check — "reads gray")
+  to `#1E8449`; validated the new `--series2` blue (`#2A78D6`) against the
+  existing `--tape` amber for the two line series
+  (`scripts/validate_palette.js` from the dataviz skill). The amber leg gets
+  a contrast WARN on this surface, mitigated by the existing full data
+  table below (a WARN needs visible labels or a table, not a color change).
+
 ## v1.9.2 (dashboard: build-time tool reading docs/metrics.md, not a pasted artifact)
 - **Replaced `extras/harness-dashboard.jsx`** (paste-into-Claude.ai-artifact,
   metrics typed by hand into a form disconnected from the real
