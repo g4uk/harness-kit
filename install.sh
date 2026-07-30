@@ -59,6 +59,19 @@ fi
 
 mkdir -p "$DST"/{skills,agents,commands/harness,hooks}
 if [ "$COPY_CMD" = "cp" ]; then
+  # skills/ is meant to accumulate project-specific rules (the EDIT_ME
+  # convention, and /harness:retro routes learnings here on purpose) — unlike
+  # agents/commands/hooks, which are pure kit logic and always safe to
+  # overwrite. Never blindly overwrite it: back up whatever's there first, so
+  # an update can't silently erase a rule some retro spent real effort adding.
+  if [ -d "$DST/skills" ] && [ -n "$(ls -A "$DST/skills" 2>/dev/null)" ]; then
+    BACKUP="$DST/skills.pre-update-$KIT_VERSION"
+    if [ ! -d "$BACKUP" ]; then
+      cp -r "$DST/skills" "$BACKUP"
+      echo ">> Backed up existing skills/ to .claude/$(basename "$BACKUP") before updating —"
+      echo "   diff it against the new skills/ and re-apply any project-specific rules you'd lose otherwise."
+    fi
+  fi
   cp -r "$SRC"/skills/* "$DST/skills/" 2>/dev/null || true
   cp "$SRC"/agents/* "$DST/agents/" 2>/dev/null || true
   cp "$SRC"/commands/harness/* "$DST/commands/harness/" 2>/dev/null || true
