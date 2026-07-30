@@ -16,7 +16,7 @@ Progression through each scenario's stages is gated by evidence — exit criteri
 ```
 commands/    harness/ namespace (avoids collisions with other installed plugins):
              /harness:spec /harness:plan /harness:commit /harness:verify /harness:retro
-             /harness:feature /harness:onboard /harness:log-metrics
+             /harness:feature /harness:onboard /harness:log-metrics /harness:dashboard
 agents/      researcher, test-writer, implementer, reviewer, doc-writer
              — model: per-role tier (routine work cheaper, implementer keeps primary)
 skills/      code-review, testing, db-migrations, frontend      ← EDIT_ME for your stack
@@ -126,12 +126,13 @@ Full guides the kit is distilled from (all examples use CraftPlan, a fictional r
 - docs/greenfield-harness.md — starting a project from scratch, harness-first
 
 ## Extras
-- **Performance dashboard** — `./build/dashboard.sh [path]` reads that project's
-  `docs/metrics.md`, bakes it into `dist/dashboard.html` (cost/first-pass-rate/
-  human-minutes trends, first-half-vs-second-half retro-compounding check, the
-  three scenario checklists as a secondary reference tab). No server, no
-  build tooling — open the file directly in a browser. Rebuild after logging
-  new entries with `/harness:log-metrics` to refresh it.
+- **Performance dashboard** — `/harness:dashboard` (or `./build/dashboard.sh [path]`
+  directly) reads that project's `docs/metrics.md`, bakes it into
+  `dist/dashboard.html` (cost/first-pass-rate/human-minutes trends, first-half-vs-
+  second-half retro-compounding check, the three scenario checklists as a
+  secondary reference tab). No server, no build tooling — open the file directly
+  in a browser. Rebuild after logging new entries with `/harness:log-metrics` to
+  refresh it.
 
 ## License
 MIT — see LICENSE.
