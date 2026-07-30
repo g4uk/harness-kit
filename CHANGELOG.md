@@ -2,6 +2,20 @@
 
 Version history for harness-kit. See README.md for current structure and usage.
 
+## v1.9.5 (install.sh: back up skills/ before --update overwrites it)
+- **FIX**: `--update` treated `skills/` like `agents/`/`commands/`/`hooks/` —
+  pure kit logic, always safe to overwrite. It isn't: the `EDIT_ME`
+  convention and `/harness:retro`'s own routing (v1.9.1) both exist
+  specifically so `skills/` accumulates project-specific rules over time.
+  Found live — updating kumite-analyzer silently deleted two real rules
+  from `skills/frontend/SKILL.md` that a past retro had added. Now backs
+  up the existing `skills/` to `skills.pre-update-<version>/` before
+  overwriting (once per version — a repeat `--update` at the same version
+  won't clobber the first backup with already-updated content). No
+  auto-merge attempted — same "never blindly delete" caution already
+  applied to `evals/traces` and `evals/results` elsewhere in this script,
+  just guarantees nothing is silently lost.
+
 ## v1.9.4 (add /harness:dashboard)
 - New slash command, wraps `./build/dashboard.sh [path]`: no argument builds
   from the current project's own `docs/metrics.md`, opens `dist/dashboard.html`
