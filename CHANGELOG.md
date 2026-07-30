@@ -2,6 +2,12 @@
 
 Version history for harness-kit. See README.md for current structure and usage.
 
+## v1.9.4 (add /harness:dashboard)
+- New slash command, wraps `./build/dashboard.sh [path]`: no argument builds
+  from the current project's own `docs/metrics.md`, opens `dist/dashboard.html`
+  when done. Picked up automatically by `install.sh`'s existing
+  `commands/harness/*` wildcard copy — no install.sh change needed.
+
 ## v1.9.3 (dashboard: cost/minutes as indexed lines, not a dual-axis overlay)
 - Requested overlaying Cost per feature and Human minutes per feature on one
   chart to see the relationship between them. A literal dual-axis overlay
