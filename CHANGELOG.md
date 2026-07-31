@@ -2,6 +2,34 @@
 
 Version history for harness-kit. See README.md for current structure and usage.
 
+## v1.9.6 (evals: workspace-trust, output diagnostics, cross-trace teardown, model tiering)
+Four fixes found live debugging kumite-analyzer's CI evals, in the order
+they surfaced — each one unblocked the next:
+- **FIX**: every eval trace was silently failing with `tools=[none]` —
+  `--dangerously-skip-permissions` doesn't cover Claude Code's separate
+  workspace-trust dialog, which needs an interactive accept normally
+  impossible in headless CI. `docker/claude-run.sh` now pre-accepts it by
+  writing `$HOME/.claude.json` before invoking `claude`, exactly as the
+  CLI's own error message says to.
+- **FIX**: a FAIL on any `cmd:` check showed nothing but the command text —
+  both `run_check` calls in `evals/run.sh` discarded stdout/stderr
+  unconditionally. Now captures and shows the tail (capped 2000 chars) on
+  FAIL — the same raw-output-surfacing principle already applied to the
+  agent's own output, extended to check output.
+- **FIX**: a trace's `docker compose up -d` never got torn down — only its
+  worktree directory was deleted, not the containers, which kept holding
+  their host ports and broke the *next* trace's own `docker compose up`
+  ("port is already allocated"). `evals/run.sh` now tears down via the same
+  `run_check` dispatcher before deleting each trace's worktree.
+- **`docker/claude-run.sh`**: defaults eval runs to `sonnet` instead of
+  the account's own default model (observed live: `claude-opus-4-8[1m]`,
+  ~5x a mid-tier model's price) — a trace is verification against an
+  already-solved task, not new multi-step reasoning, the same judgment
+  call `agents/*.md` already makes for reviewer/researcher-tier work.
+  `HARNESS_EVAL_MODEL` overrides it per run. Scoped safely: `claude-run.sh`
+  has no other caller — the agent's real work happens in interactive
+  sessions, never through this script.
+
 ## v1.9.5 (install.sh: back up skills/ before --update overwrites it)
 - **FIX**: `--update` treated `skills/` like `agents/`/`commands/`/`hooks/` —
   pure kit logic, always safe to overwrite. It isn't: the `EDIT_ME`
