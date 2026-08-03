@@ -2,6 +2,26 @@
 
 Version history for harness-kit. See README.md for current structure and usage.
 
+## v1.9.7 (evals: EVAL_TRACES, results artifact, haiku tried and reverted)
+- **`evals/run.sh`**: new `EVAL_TRACES` env var (comma/space-separated name
+  substrings, e.g. `"007,008,009"`) — run only a named subset of the
+  accumulated traces instead of paying to re-run all of them every time
+  while debugging a specific failure. Matches the exact number prefix or
+  full name, not a bare substring (`"007"` no longer risks matching a
+  future `"0072-..."` or `"1007-..."`).
+- **`ci/harness-evals.yml`**: uploads `harness/evals/results/*.md` as a
+  downloadable CI artifact (`if: always()`) — the runner's disk previously
+  died with the job, so a failed run's results were gone the moment the
+  job ended, contradicting README's own "real project history" framing
+  for that directory.
+- **`docker/claude-run.sh`**: tried defaulting eval runs to `haiku` instead
+  of `sonnet` for cost — reverted after the first real trace measured
+  worse on every axis at once (6 turns/$0.16/32s on sonnet vs. 33
+  turns/$0.20/143s on haiku, hitting the `EVAL_MAX_TURNS` thrashing gate
+  and issuing an unexplained write on a trace that needed zero changes).
+  `sonnet` is the default again; `HARNESS_EVAL_MODEL` still overrides per
+  run.
+
 ## v1.9.6 (evals: workspace-trust, output diagnostics, cross-trace teardown, model tiering)
 Four fixes found live debugging kumite-analyzer's CI evals, in the order
 they surfaced — each one unblocked the next:
