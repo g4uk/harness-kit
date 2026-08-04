@@ -6,11 +6,16 @@
 # with no docker CLI. evals/run.sh itself has no opinion on CI vendor; this
 # is the GitHub-specific wiring for it.
 name: harness-evals
-# Triggers always active — no manual re-enabling needed later. evals/run.sh
-# itself checks EVAL_MIN_TRACES and exits instantly (before any API call) if
-# there aren't enough traces yet for a baseline worth protecting (Stage 3 in
-# scenarios/greenfield.md, ~6). It self-adjusts as traces accumulate — once
-# past the threshold, real runs start happening automatically.
+# Triggers always active — no manual uncommenting needed as traces
+# accumulate. evals/run.sh itself checks EVAL_MIN_TRACES and exits instantly
+# (before any API call) if there aren't enough traces yet for a baseline
+# worth protecting (Stage 3 in scenarios/greenfield.md, ~6). It self-adjusts
+# as traces accumulate — once past the threshold, real runs start happening
+# automatically. Separately, a project can pause eval CI manually at any
+# time by committing harness/evals/DISABLED (empty file) — run.sh checks for
+# it before the trace-count gate. Both gates share the same
+# workflow_dispatch override below: a human explicitly asking for a real run
+# always means it.
 on:
   workflow_dispatch: {}
   pull_request:
@@ -34,6 +39,9 @@ jobs:
           # workflow_dispatch = a human explicitly asked for a real run — skip
           # the trace-count gate; push/pull_request stay self-adjusting.
           EVAL_MIN_TRACES: ${{ github.event_name == 'workflow_dispatch' && '0' || '6' }}
+          # Same override for the manual harness/evals/DISABLED off switch —
+          # workflow_dispatch bypasses it too.
+          EVAL_FORCE_RUN: ${{ github.event_name == 'workflow_dispatch' && '1' || '' }}
           HARNESS_EVAL_CHECKS_HOST: "1"
         run: ./harness/evals/run.sh
       # results/*.md is real project history (per README), but the runner's

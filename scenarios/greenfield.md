@@ -54,7 +54,8 @@ the workflow) makes it exit instantly, before touching docker or the API key, wh
 `harness/evals/traces/` has fewer traces than that. Once `/harness:retro` pushes the count past the
 threshold, real runs simply start happening — nothing to edit. Force a real run earlier
 via `gh workflow run harness-evals` (uses `workflow_dispatch`, ignores the trace count) if
-you want to sanity-check it before then.
+you want to sanity-check it before then. To pause eval CI manually at any time, commit an
+empty `harness/evals/DISABLED` file; remove it to resume (`workflow_dispatch` still bypasses it).
 
 **Exit:** dispatch matrix reflects measured (not assumed) agent trustworthiness;
 eval baseline recorded.

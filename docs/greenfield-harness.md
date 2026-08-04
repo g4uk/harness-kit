@@ -161,6 +161,11 @@ one or two traces to compare against); once `/harness:retro` pushes the count pa
 just start happening. `gh workflow run harness-evals` (`workflow_dispatch`) always runs for
 real regardless of count, if you want to sanity-check it sooner.
 
+Separately, committing an empty `harness/evals/DISABLED` file pauses eval CI manually at any
+time (cost concerns, flakiness, migration in progress) — `run.sh` checks for it before the
+trace-count gate. Remove the file to resume; `workflow_dispatch` bypasses it the same way it
+bypasses `EVAL_MIN_TRACES`.
+
 **Secret scope, for whenever you do run it:** `ANTHROPIC_API_KEY` must live in the repo's
 **Repository secrets** (Settings > Secrets and variables > Actions), not an Environment
 secret and not an org secret that isn't shared with this repo. Neither `harness-evals.yml`

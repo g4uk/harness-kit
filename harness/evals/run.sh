@@ -16,6 +16,18 @@ set -u
 REPO=$(git rev-parse --show-toplevel)
 KIT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
 
+# Manual off switch: presence of this file disables eval CI entirely — no
+# docker required, no API calls made. Absence (default) leaves the
+# self-adjusting behavior below untouched. EVAL_FORCE_RUN=1 (set by
+# ci/harness-evals.yml on workflow_dispatch — see EVAL_MIN_TRACES's identical
+# override below) bypasses it: a human explicitly asking for a real run
+# always means it, same reasoning as the trace-count gate.
+if [ -f "$REPO/harness/evals/DISABLED" ] && [ "${EVAL_FORCE_RUN:-}" != "1" ]; then
+  echo "harness/evals/DISABLED present — eval CI is disabled. Skipping (no docker, no API calls)."
+  echo "Remove the file to re-enable, or run via workflow_dispatch (gh workflow run harness-evals) to override once."
+  exit 0
+fi
+
 # Self-adjusting gate: skip entirely — before requiring docker, before any
 # API call — if there aren't enough traces yet for a baseline worth
 # protecting. Default 0 = always run (a human invoking this manually always
