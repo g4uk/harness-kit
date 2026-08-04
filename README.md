@@ -17,6 +17,7 @@ Progression through each scenario's stages is gated by evidence — exit criteri
 commands/    harness/ namespace (avoids collisions with other installed plugins):
              /harness:spec /harness:plan /harness:commit /harness:verify /harness:retro
              /harness:feature /harness:onboard /harness:log-metrics /harness:dashboard
+             /harness:debug (reproduce → isolate → hypothesize → fix, evidence-driven)
 agents/      researcher, test-writer, implementer, reviewer, doc-writer
              — model: per-role tier (routine work cheaper, implementer keeps primary)
 skills/      code-review, testing, db-migrations, frontend      ← EDIT_ME for your stack
