@@ -2,6 +2,18 @@
 
 Version history for harness-kit. See README.md for current structure and usage.
 
+## v1.9.8 (evals: manual off switch for eval CI)
+- **`harness/evals/run.sh`**: new `harness/evals/DISABLED` marker-file gate,
+  checked before docker/API calls and before the existing `EVAL_MIN_TRACES`
+  gate — lets a project pause eval CI manually (cost, flakiness, migration
+  in progress) by committing an empty file, no YAML editing needed. Absence
+  (default) leaves the existing self-adjusting trace-count behavior
+  untouched.
+- **`ci/harness-evals.yml`**: `EVAL_FORCE_RUN` set to `1` on
+  `workflow_dispatch`, bypassing the new gate the same way `EVAL_MIN_TRACES`
+  is already bypassed — a human explicitly asking for a real run always
+  means it.
+
 ## v1.9.7 (evals: EVAL_TRACES, results artifact, haiku tried and reverted)
 - **`evals/run.sh`**: new `EVAL_TRACES` env var (comma/space-separated name
   substrings, e.g. `"007,008,009"`) — run only a named subset of the
