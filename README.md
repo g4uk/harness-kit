@@ -22,8 +22,8 @@ agents/      researcher, test-writer, implementer, reviewer, doc-writer
              — model: per-role tier (routine work cheaper, implementer keeps primary)
 skills/      code-review, testing, db-migrations, frontend      ← EDIT_ME for your stack
 hooks/       guard.sh (PreToolUse, exit 2, fail-closed without jq)
-             secrets-scan.sh (PostToolUse: gitleaks or grep fallback)
-             fmt.sh · tests-green.sh (Stop, scoped to changed packages)
+             secrets-scan.sh · fmt.sh (PostToolUse: scan then format the written file)
+             tests-green.sh (Stop, scoped to changed packages)
 settings/    settings.project.json / settings.user.json — permissions deny-by-default + hooks
 ci/          harness-evals.yml (invariant #6 as code) · agent-review.yml
              plan-verify.yml (custom plan coherence checks) · hooks-test.yml (regression detection)
@@ -44,7 +44,7 @@ install.sh   → project .claude/ + harness/ (with settings and CI) or ~/.claude
 VERSION      Kit version for update detection
 ```
 
-## Security model (three layers)
+## Security model (four layers)
 0. **container boundary** — the agent's own headless run always happens in the harness-runner
    sandbox (non-root user, dropped capabilities, resource limits, throwaway mounts). Checks
    (human-approved via `/harness:retro`, not agent-authored) do too by default; `HARNESS_EVAL_CHECKS_HOST=1`

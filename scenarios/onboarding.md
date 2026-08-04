@@ -29,7 +29,8 @@ Stages advance on **exit criteria**, not the calendar.
 
 ## Stage 3 — Personal harness
 - [ ] 3 personal skills from real cases
-- [ ] researcher + pr-preflight; no PR without preflight
+- [ ] researcher (shipped) + pr-preflight (build it yourself from your first review remarks —
+      see docs/onboarding-new-project.md §3.2); no PR without preflight
 - [ ] Personal dispatch matrix: where the agent can be trusted here
 
 **Exit:** preflight catches issues before human review does; your dispatch matrix is

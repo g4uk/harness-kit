@@ -3,7 +3,7 @@
 Run the same gates CI will run:
 
     bash -n hooks/*.sh install.sh harness/evals/run.sh   # syntax
-    ./tests/hooks-test.sh                        # guard/scan regression cases
+    ./tests/hooks.test.sh                        # guard/scan regression cases
     docker build -t harness-runner:latest harness/docker/
     ./tests/runner-smoke.sh                      # eval runner end-to-end
 
