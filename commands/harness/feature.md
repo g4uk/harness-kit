@@ -12,7 +12,8 @@ is unnecessary and do it directly.
 4. test-writer: failing tests per plan
 5. implementer: step-by-step implementation until green
 6. reviewer: verdict on the diff. REQUEST_CHANGES → back to implementer (max 2 rounds,
-   then escalate to me)
+   then escalate to me — one retry absorbs a normal miss, a second miss means implementer
+   and reviewer are talking past each other and a human should look, not burn more tokens)
 7. /harness:verify $ARGUMENTS
 8. Remind me to run /harness:retro $ARGUMENTS after the merge
 
