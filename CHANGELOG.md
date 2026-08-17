@@ -2,6 +2,27 @@
 
 Version history for harness-kit. See README.md for current structure and usage.
 
+## v1.9.9 (auth: OAuth token support, /harness:debug command, doc fixes)
+- **Auth**: `harness/docker/claude-run.sh` and both CI workflows
+  (`harness-evals.yml`, `agent-review.yml`) now prefer `CLAUDE_CODE_OAUTH_TOKEN`
+  (subscription quota, via `claude setup-token`) over `ANTHROPIC_API_KEY`
+  (metered), falling back to the API key when no OAuth token secret is set —
+  existing API-key-only setups keep working unchanged. Docs
+  (`docs/greenfield-harness.md`, `scenarios/greenfield.md`, `install.sh`'s
+  next-steps hint) updated with the quota-vs-billing and token-expiry
+  tradeoffs.
+- **`commands/harness/debug.md`**: new `/harness:debug` command — reproduce,
+  isolate, hypothesize, fix, verify — with hooks into `EVAL_TRACES` for
+  isolating a single failing eval trace and `harness/docker/exec.sh` for
+  reproducing inside the same sandbox CI checks run in. Fills the gap in the
+  spec/plan/feature/verify/retro command set: nothing previously guided
+  debugging itself.
+- **docs**: fixed several description inconsistencies across kit files
+  (stale `plugin.json` version, wrong test file path in CONTRIBUTING.md,
+  hook event/scoping mislabel in README, mismatched "three layers" heading,
+  unflagged user-built command in `scenarios/onboarding.md`) and explained
+  the rationale for the reviewer retry cap in `/harness:feature`.
+
 ## v1.9.8 (evals: manual off switch for eval CI)
 - **`harness/evals/run.sh`**: new `harness/evals/DISABLED` marker-file gate,
   checked before docker/API calls and before the existing `EVAL_MIN_TRACES`
