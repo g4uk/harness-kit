@@ -166,13 +166,28 @@ time (cost concerns, flakiness, migration in progress) — `run.sh` checks for i
 trace-count gate. Remove the file to resume; `workflow_dispatch` bypasses it the same way it
 bypasses `EVAL_MIN_TRACES`.
 
-**Secret scope, for whenever you do run it:** `ANTHROPIC_API_KEY` must live in the repo's
-**Repository secrets** (Settings > Secrets and variables > Actions), not an Environment
-secret and not an org secret that isn't shared with this repo. Neither `harness-evals.yml`
-nor `agent-review.yml` declares `environment:`, so anything scoped there is invisible to the
-job — the container reports `apiKeySource:none` with no error, not a loud failure.
-`harness/evals/run.sh` surfaces the raw agent output on an unparseable trajectory (v1.5.1+)
-specifically so this is diagnosable from the CI log instead of a bare `turns=? cost=?`.
+**Auth, for whenever you do run it:** both workflows and `harness/docker/claude-run.sh`
+accept `CLAUDE_CODE_OAUTH_TOKEN` (subscription quota — generate once locally with
+`claude setup-token`, then store it as a secret) or `ANTHROPIC_API_KEY` (metered, per-token
+billing). `claude-run.sh` tries the OAuth token first and only falls back to the API key if
+it's unset, so setting either one alone is enough — you don't need both. Nuances that matter
+before picking one:
+- **Quota vs. billing.** The OAuth token draws from your Pro/Max plan's shared quota — the
+  same pool your interactive sessions use — not a separate metered bill. Fine for occasional
+  eval runs; a busy CI schedule (many PRs, `EVAL_MIN_TRACES` past threshold) can compete with
+  your own daily usage. The API key is metered separately and isolated from that quota at the
+  cost of paying per token — `harness/evals/run.sh` already tracks and prints `TOTAL_COST`
+  per run for exactly this tradeoff.
+- **Expiry.** A `claude setup-token` token is long-lived but not permanent — CI failing with
+  an auth error after months of green runs is usually this, not a code regression. Re-run
+  `claude setup-token` and update the secret; the API key has no such expiry.
+- **Scope.** Either one must live in the repo's **Repository secrets** (Settings > Secrets
+  and variables > Actions), not an Environment secret and not an org secret that isn't shared
+  with this repo. Neither `harness-evals.yml` nor `agent-review.yml` declares `environment:`,
+  so anything scoped there is invisible to the job — the container reports `apiKeySource:none`
+  with no error, not a loud failure. `harness/evals/run.sh` surfaces the raw agent output on
+  an unparseable trajectory (v1.5.1+) specifically so this is diagnosable from the CI log
+  instead of a bare `turns=? cost=?`.
 
 ---
 

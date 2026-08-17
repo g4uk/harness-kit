@@ -11,7 +11,14 @@ jobs:
         with: { fetch-depth: 0 }
       - uses: anthropics/claude-code-action@v1
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          # CLAUDE_CODE_OAUTH_TOKEN (subscription quota, `claude setup-token`) is
+          # preferred; anthropic_api_key (metered) is passed only when no OAuth
+          # token secret exists, via the `== '' && X || ''` idiom — an unset
+          # secret reads as '""' in Actions, so this never sends both non-empty
+          # at once. Both secrets are still repo-scoped (see docs/greenfield-harness.md's
+          # "Auth" note) — an Environment-scoped one is invisible here.
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          anthropic_api_key: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN == '' && secrets.ANTHROPIC_API_KEY || '' }}
           prompt: |
             Do a code review of this PR against .claude/skills/code-review/SKILL.md.
             If specs/*/plan.md exists — check the diff against the out-of-scope guard.

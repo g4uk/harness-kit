@@ -25,12 +25,16 @@ own tool; it can't see you typing the same command yourself in a terminal.
 
 **Exit:** a request hits production and comes back; CI is green; trace #0 exists in harness/evals/.
 
-**Gotcha on the first CI push:** `ANTHROPIC_API_KEY` must be a **repository** secret
-(Settings > Secrets and variables > Actions > Repository secrets), not an Environment or
-org secret — `harness-evals`/`agent-review` don't declare `environment:`, so anything
-scoped there is invisible to the job and silently yields `apiKeySource:none` in the
-container, no error shown. (Only matters once `harness-evals` actually runs for real —
-see Stage 3: below the trace threshold it self-skips before touching the API key at all.)
+**Gotcha on the first CI push:** set `CLAUDE_CODE_OAUTH_TOKEN` (subscription quota — run
+`claude setup-token` locally to generate it once) or `ANTHROPIC_API_KEY` (metered) as a
+**repository** secret (Settings > Secrets and variables > Actions > Repository secrets),
+not an Environment or org secret — `harness-evals`/`agent-review` don't declare
+`environment:`, so anything scoped there is invisible to the job and silently yields
+`apiKeySource:none` in the container, no error shown. Setting one is enough — the OAuth
+token is tried first and the API key is only a fallback (see docs/greenfield-harness.md's
+"Auth" note for the quota-vs-billing and token-expiry tradeoffs). (Only matters once
+`harness-evals` actually runs for real — see Stage 3: below the trace threshold it
+self-skips before touching auth at all.)
 
 ## Stage 2 — Vertical slices
 - [ ] Features shipped as vertical slices only; /harness:retro after EVERY merge

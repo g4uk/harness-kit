@@ -34,8 +34,24 @@ MODEL="${HARNESS_EVAL_MODEL:-sonnet}"
 command -v docker >/dev/null || { echo "FATAL: docker is required for project runs (policy)."; exit 1; }
 docker image inspect "$IMG" >/dev/null 2>&1 || docker build -t "$IMG" "$KIT_DIR/docker"
 
+# Auth: CLAUDE_CODE_OAUTH_TOKEN (subscription, `claude setup-token`) is tried
+# first — usage comes out of the plan's quota, not metered per-token billing,
+# which matters here since evals run the CLI dozens of times unattended.
+# Falls back to ANTHROPIC_API_KEY (metered) if no OAuth token is set, so
+# existing setups keep working unchanged. Only one is ever forwarded — never
+# both — since a stale/expired OAuth token left in the environment alongside
+# a valid API key should not silently win and break the run.
+if [ -n "${CLAUDE_CODE_OAUTH_TOKEN:-}" ]; then
+  AUTH_ARGS=(-e CLAUDE_CODE_OAUTH_TOKEN)
+elif [ -n "${ANTHROPIC_API_KEY:-}" ]; then
+  AUTH_ARGS=(-e ANTHROPIC_API_KEY)
+else
+  echo "FATAL: set CLAUDE_CODE_OAUTH_TOKEN (default; 'claude setup-token') or ANTHROPIC_API_KEY." >&2
+  exit 1
+fi
+
 docker run --rm \
-  -e ANTHROPIC_API_KEY \
+  "${AUTH_ARGS[@]}" \
   -v "$DIR":/work -w /work \
   --memory=4g --cpus=2 --pids-limit=512 \
   --cap-drop=ALL --security-opt no-new-privileges \

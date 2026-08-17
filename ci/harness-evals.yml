@@ -34,6 +34,11 @@ jobs:
         run: docker build -t harness-runner:latest harness/docker/
       - name: Run evals (sample on PR, full on main)
         env:
+          # Both passed through; harness/docker/claude-run.sh prefers
+          # CLAUDE_CODE_OAUTH_TOKEN (subscription quota) and falls back to
+          # ANTHROPIC_API_KEY (metered) only if the former is unset — safe to
+          # set only one of the two repo secrets, the other stays empty.
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           EVAL_LIMIT: ${{ github.event_name == 'pull_request' && 3 || 0 }}
           # workflow_dispatch = a human explicitly asked for a real run — skip
