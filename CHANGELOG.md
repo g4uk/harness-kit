@@ -2,6 +2,28 @@
 
 Version history for harness-kit. See README.md for current structure and usage.
 
+## v1.9.11 (fix: v1.9.10 template artifacts weren't actually reaching installed projects)
+- **`harness/fanout/run.sh` and `harness/mutation/run.sh` no longer embed a heredoc copy
+  of their seed file.** Both scripts had `templates/fanout-log.md.template` /
+  `templates/mutation-report.md.template` as the "real" version, plus an inline heredoc
+  fallback for when a template lookup failed in an installed project — two copies of the
+  same content that had already drifted from each other. `install.sh` now seeds
+  `harness/templates/{fanout-log,mutation-report}.md.template` into every installed
+  project (fresh install: `cp -n`; `--update`: overwritten like the rest of `harness/`),
+  and both scripts look there first, falling back to the kit-source `templates/` only
+  when run straight out of this repo. One source of truth either way.
+- **`install.sh` now seeds the rest of v1.9.10's templates too.** Fresh install `cp -n`s
+  `perception-gap.md.template`, `topology-report.md.template`, `mcp-budget.md.template`,
+  `migration-playbook.md.template`, and the new `rollout.md.template` (below) into
+  `docs/harness/`. Previously only `metrics.md` and `dispatch-matrix.md` were seeded, so
+  a user following the playbook had to go dig these out of the kit's own repo.
+  `.mcp.json.template` stays manual-copy-only — unlike the others it's actively parsed by
+  Claude Code, and an unfilled `{{command}}` placeholder risks a startup error rather
+  than a harmless TODO.
+- **`templates/rollout.md.template`** — Step 8.4 (`§ plugin-rollout`) was the one playbook
+  section left prose-only after v1.9.10 filled in the rest; same stage/adoption-metric/
+  rollback-criterion table, now a real seed file like its siblings.
+
 ## v1.9.10 (playbook artifacts: perception-gap, mcp-server, mutation, fanout, marketplace.json)
 - **New artifacts for playbook sections that were prose-only** (docs/harness-playbook.md
   had the steps; the kit had no file to run them with):
