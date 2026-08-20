@@ -2,6 +2,11 @@
 
 Version history for harness-kit. See README.md for current structure and usage.
 
+## v1.9.12 (test: claude-md-limit.test.sh skips cleanly without jq)
+- The hook soft-fails (exit 0) without `jq` by design — it's not a security layer. The
+  test didn't know that and would silently report 5/7 instead of explaining why two
+  cases "failed". Cosmetic only: CI (`ubuntu-latest`) always has `jq`.
+
 ## v1.9.11 (fix: v1.9.10 template artifacts weren't actually reaching installed projects)
 - **`harness/fanout/run.sh` and `harness/mutation/run.sh` no longer embed a heredoc copy
   of their seed file.** Both scripts had `templates/fanout-log.md.template` /

@@ -9,7 +9,7 @@
       "name": "harness-kit",
       "source": "./",
       "description": "Spec-driven harness: skills + agents + commands + quality gates. Scenarios: greenfield / onboarding / existing project.",
-      "version": "1.9.11"
+      "version": "1.9.12"
     }
   ]
 }
