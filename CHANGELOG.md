@@ -2,6 +2,46 @@
 
 Version history for harness-kit. See README.md for current structure and usage.
 
+## v1.9.10 (playbook artifacts: perception-gap, mcp-server, mutation, fanout, marketplace.json)
+- **New artifacts for playbook sections that were prose-only** (docs/harness-playbook.md
+  had the steps; the kit had no file to run them with):
+  - `templates/perception-gap.md.template` — the 10-question baseline/re-audit scoring format.
+  - `templates/topology-report.md.template` + a `Topology` column on `metrics.md.template`
+    — cost-per-topology comparison for the "one task × 3 topologies" experiment.
+  - `examples/mcp-server/` — the playbook's ~50-line Go MCP server as a real, buildable
+    file (was inline code only) + `templates/.mcp.json.template` +
+    `templates/mcp-budget.md.template` for the token-budget audit.
+  - `harness/mutation/run.sh` — wraps `go-mutesting`, appends to
+    `docs/harness/mutation-report.md`; `templates/mutation-report.md.template`.
+  - `harness/fanout/run.sh` — creates a worktree + branch per shard for parallel
+    migrations; `templates/migration-playbook.md.template` +
+    `templates/fanout-log.md.template`.
+  - `.claude-plugin/marketplace.json` — installable via the plugin marketplace, not
+    just `install.sh`.
+  - `hooks/claude-md-limit.sh` — turns the documented "CLAUDE.md ≤200 lines" rule into
+    an actual PostToolUse gate (exit 2), wired into `settings.project.json` and
+    `hooks/hooks.json`; `tests/claude-md-limit.test.sh` regression suite.
+  - `install.sh` updated to install the two new `harness/` scripts like the existing
+    `harness/evals` and `harness/docker` ones (both fresh-install and `--update`).
+- **Naming**: replaced the `L01`–`L08` section labels throughout the playbook and every
+  file that referenced them with topic slugs (`perception-gap`, `skills-layer`,
+  `topology`, `mcp`, `spec-driven`, `quality-gates`, `fanout`, `plugin-rollout`) —
+  matches the artifact filenames above, so the playbook section, its template, and its
+  script share one name instead of an arbitrary number.
+- **Bug fixes** surfaced by `/code-review` on this diff:
+  - `examples/mcp-server/main.go` (and the identical code in the playbook): `rows.Scan`
+    errors were discarded and `rows.Err()` was never checked — a scan failure silently
+    returned corrupted rows as valid data instead of an error.
+  - `hooks/claude-md-limit.sh`: `wc -l` undercounts a file whose last line has no
+    trailing newline, letting a 201-line CLAUDE.md read as 200 and pass the gate — now
+    uses `awk 'END{print NR}'`, with a regression test for the exact case.
+  - `docs/harness-playbook.md`: Step 6.6 pointed at raw `go-mutesting` output instead of
+    the new `harness/mutation/run.sh`; Step 7.5 told readers to write a second
+    `fanout-cost-delta.md` duplicating the table already in `fanout-log.md`; Step 0.2's
+    example `metrics.md` table was missing the new `Topology` column. All synced.
+  - `CONTRIBUTING.md` / `ci/hooks-test.yml`: the two new `harness/` scripts weren't in
+    the local `bash -n` gate or in any CI job — added both.
+
 ## v1.9.9 (auth: OAuth token support, /harness:debug command, doc fixes)
 - **Auth**: `harness/docker/claude-run.sh` and both CI workflows
   (`harness-evals.yml`, `agent-review.yml`) now prefer `CLAUDE_CODE_OAUTH_TOKEN`
