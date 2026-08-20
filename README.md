@@ -30,7 +30,11 @@ ci/          harness-evals.yml (invariant #6 as code) · agent-review.yml
              plan-verify.yml (custom plan coherence checks) · hooks-test.yml (regression detection)
 templates/   CLAUDE.md, CLAUDE.local.md, surface-map, decisions, metrics (with topology),
              dispatch-matrix, spec, plan, eval-trace, perception-gap, topology-report,
-             .mcp.json, mcp-budget, mutation-report, migration-playbook, fanout-log
+             .mcp.json, mcp-budget, mutation-report, migration-playbook, fanout-log, rollout
+             — install.sh seeds the docs/harness/*.md ones (perception-gap, topology-report,
+             mcp-budget, migration-playbook, rollout) on fresh install; fanout-log and
+             mutation-report are seeded on demand by fanout/run.sh and mutation/run.sh instead
+             (see harness/templates/ below)
 harness/     installed at the project's harness/ (not root — avoids colliding with the
              project's own docker/ folder for its actual product, if it has one):
   evals/       run.sh — Docker-only orchestrator; output eval (checks) + trajectory eval
@@ -39,6 +43,9 @@ harness/     installed at the project's harness/ (not root — avoids colliding 
   dashboard/   template.html — performance dashboard, built from docs/metrics.md
   mutation/    run.sh — go-mutesting wrapper, appends to docs/harness/mutation-report.md
   fanout/      run.sh — worktree-per-shard for parallel migrations (§ fanout)
+  templates/   fanout-log.md.template, mutation-report.md.template — install.sh's copy of
+               the kit's own templates/*.template, so mutation/run.sh and fanout/run.sh have
+               a seed file to find post-install without embedding a second copy inline
 scenarios/   greenfield · onboarding · existing-own — checklist overlays
 docs/        full step-by-step guides the kit was distilled from
 examples/    craftplan-spec.md, plan.md, retro.md — complete spec→plan→retro cycle (learning reference)

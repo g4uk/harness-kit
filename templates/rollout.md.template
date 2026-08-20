@@ -1,0 +1,15 @@
+# Staged Rollout — {{TEAM}}
+
+Roll out the harness in stages, even if "the team" is you plus a future teammate. Each
+stage has an adoption metric and a rollback criterion — advance on evidence, not the
+calendar (docs/harness-playbook.md § plugin-rollout Step 8.4).
+
+| Stage | What we enable | Adoption metric | Roll back if |
+|---|---|---|---|
+| 1 | CLAUDE.md + skills | perception audit ≥8/10 for everyone | wrong-advice complaints > 2/wk |
+| 2 | hooks + /harness:spec /harness:plan /harness:commit | 100% of PRs have a spec | hooks false-block > 1/day |
+| 3 | CI agent (comments only) | ≥50% of its remarks deemed valid | noise > signal |
+| 4 | subagents + evals baseline | pass rate ≥ 15/20 | cost/feature grew vs stage 1 |
+
+## Retro
+metrics.md first stage vs last — $/feature, first-pass rate, human minutes per feature.

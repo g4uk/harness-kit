@@ -27,32 +27,16 @@ git -C "$REPO" rev-parse --verify "$BASE" >/dev/null 2>&1 || {
 
 mkdir -p "$(dirname "$LOG")"
 if [ ! -f "$LOG" ]; then
-  if [ -f "$KIT_DIR/templates/fanout-log.md.template" ]; then
-    cp "$KIT_DIR/templates/fanout-log.md.template" "$LOG"
-  else
-    # KIT_DIR is this project's own root when installed via install.sh (no templates/
-    # copy there by design — see templates/fanout-log.md.template in the kit source).
-    cat > "$LOG" <<'EOF'
-# Fan-out Log
-
-Keep this updated in real time while shards run in parallel. You are the tech lead
-here: unblock shards, don't write their code.
-
-| Time | Shard | Event | My action |
-|---|---|---|---|
-
-## Merge + cost delta (after all shards land)
-
-| Metric | Sequential (estimate: one shard actual × N) | Fan-out × N |
-|---|---|---|
-| Wall-clock | | |
-| $ total | | |
-| My minutes | | |
-| Merge conflicts | | |
-
-Conclusion: fan-out for ___, NOT for ___.
-EOF
-  fi
+  # harness/templates/ is where install.sh seeds this template in an installed
+  # project; templates/ (kit source root) covers running run.sh straight out of
+  # the kit repo. Single source of truth either way — no inline fallback copy.
+  TEMPLATE="$KIT_DIR/harness/templates/fanout-log.md.template"
+  [ -f "$TEMPLATE" ] || TEMPLATE="$KIT_DIR/templates/fanout-log.md.template"
+  [ -f "$TEMPLATE" ] || {
+    echo "fanout-log.md.template not found under harness/templates/ or templates/ — re-run install.sh to restore it." >&2
+    exit 1
+  }
+  cp "$TEMPLATE" "$LOG"
 fi
 
 for SHARD in "$@"; do

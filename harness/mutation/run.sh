@@ -19,25 +19,16 @@ command -v go-mutesting >/dev/null || {
 
 mkdir -p "$(dirname "$OUT")"
 if [ ! -f "$OUT" ]; then
-  if [ -f "$KIT_DIR/templates/mutation-report.md.template" ]; then
-    cp "$KIT_DIR/templates/mutation-report.md.template" "$OUT"
-  else
-    # KIT_DIR is this project's own root when installed via install.sh (no templates/
-    # copy there by design — see templates/mutation-report.md.template in the kit source).
-    cat > "$OUT" <<'EOF'
-# Mutation Report
-
-Mutation score = share of "killed" mutants. Compare a package with agent-written tests
-against one with handwritten tests: a noticeably lower agent score means the tests
-verify calls, not behavior (theater) → fix the testing skill and the retro-spec.
-
-| Package | Tests written by | Mutation score | Verdict |
-|---|---|---|---|
-| | | | |
-
-## Runs
-EOF
-  fi
+  # harness/templates/ is where install.sh seeds this template in an installed
+  # project; templates/ (kit source root) covers running run.sh straight out of
+  # the kit repo. Single source of truth either way — no inline fallback copy.
+  TEMPLATE="$KIT_DIR/harness/templates/mutation-report.md.template"
+  [ -f "$TEMPLATE" ] || TEMPLATE="$KIT_DIR/templates/mutation-report.md.template"
+  [ -f "$TEMPLATE" ] || {
+    echo "mutation-report.md.template not found under harness/templates/ or templates/ — re-run install.sh to restore it." >&2
+    exit 1
+  }
+  cp "$TEMPLATE" "$OUT"
 fi
 
 RESULT=$(go-mutesting "$PKG" 2>&1) || true

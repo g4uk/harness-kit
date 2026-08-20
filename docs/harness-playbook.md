@@ -819,8 +819,9 @@ A product built THROUGH the harness — proof of the full cycle:
 
 ### Step 8.4 — Staged rollout plan
 
-`docs/harness/rollout.md` (even if "the team" = you plus a future teammate). Each stage
-has an adoption metric and a rollback criterion — advance on evidence:
+`docs/harness/rollout.md` (seeded by install.sh from `templates/rollout.md.template`,
+even if "the team" = you plus a future teammate). Each stage has an adoption metric and
+a rollback criterion — advance on evidence:
 
 ```markdown
 | Stage | What we enable | Adoption metric | Roll back if |

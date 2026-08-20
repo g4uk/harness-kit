@@ -124,7 +124,7 @@ if [ "$UPDATE_MODE" = true ]; then
   fi
 fi
 
-mkdir -p "$REPO/docs" "$REPO/specs" "$REPO/harness/evals/traces" "$REPO/harness/evals/results" "$REPO/.github/workflows" "$REPO/harness/docker" "$REPO/harness/dashboard" "$REPO/harness/mutation" "$REPO/harness/fanout" "$REPO/build"
+mkdir -p "$REPO/docs/harness" "$REPO/specs" "$REPO/harness/evals/traces" "$REPO/harness/evals/results" "$REPO/.github/workflows" "$REPO/harness/docker" "$REPO/harness/dashboard" "$REPO/harness/mutation" "$REPO/harness/fanout" "$REPO/harness/templates" "$REPO/build"
 if [ "$UPDATE_MODE" = true ]; then
   # Overwrite CI workflows on update
   cp "$SRC"/ci/harness-evals.yml "$REPO/.github/workflows/" 2>/dev/null || true
@@ -140,6 +140,7 @@ if [ "$UPDATE_MODE" = true ]; then
   chmod +x "$REPO/harness/mutation/run.sh" 2>/dev/null || true
   cp "$SRC"/harness/fanout/run.sh "$REPO/harness/fanout/run.sh" 2>/dev/null || true
   chmod +x "$REPO/harness/fanout/run.sh" 2>/dev/null || true
+  cp "$SRC"/templates/fanout-log.md.template "$SRC"/templates/mutation-report.md.template "$REPO/harness/templates/" 2>/dev/null || true
   cp "$SRC"/build/dashboard.sh "$REPO/build/dashboard.sh" 2>/dev/null || true
   chmod +x "$REPO/build/dashboard.sh" 2>/dev/null || true
 else
@@ -150,6 +151,11 @@ else
   cp -n "$SRC"/ci/hooks-test.yml "$REPO/.github/workflows/" 2>/dev/null || true
   cp -n "$SRC"/templates/metrics.md.template "$REPO/docs/metrics.md" 2>/dev/null || true
   cp -n "$SRC"/templates/dispatch-matrix.md.template "$REPO/docs/dispatch-matrix.md" 2>/dev/null || true
+  cp -n "$SRC"/templates/perception-gap.md.template "$REPO/docs/harness/perception-gap.md" 2>/dev/null || true
+  cp -n "$SRC"/templates/topology-report.md.template "$REPO/docs/harness/topology-report.md" 2>/dev/null || true
+  cp -n "$SRC"/templates/mcp-budget.md.template "$REPO/docs/harness/mcp-budget.md" 2>/dev/null || true
+  cp -n "$SRC"/templates/migration-playbook.md.template "$REPO/docs/harness/migration-playbook.md" 2>/dev/null || true
+  cp -n "$SRC"/templates/rollout.md.template "$REPO/docs/harness/rollout.md" 2>/dev/null || true
   cp -n "$SRC"/harness/evals/run.sh "$REPO/harness/evals/run.sh" 2>/dev/null || true
   chmod +x "$REPO/harness/evals/run.sh" 2>/dev/null || true
   [ -f "$REPO/CLAUDE.md" ] || cp "$SRC/templates/CLAUDE.md.template" "$REPO/CLAUDE.md"
@@ -160,6 +166,7 @@ else
   chmod +x "$REPO/harness/mutation/run.sh" 2>/dev/null || true
   cp -n "$SRC"/harness/fanout/run.sh "$REPO/harness/fanout/run.sh" 2>/dev/null || true
   chmod +x "$REPO/harness/fanout/run.sh" 2>/dev/null || true
+  cp -n "$SRC"/templates/fanout-log.md.template "$SRC"/templates/mutation-report.md.template "$REPO/harness/templates/" 2>/dev/null || true
   cp -n "$SRC"/build/dashboard.sh "$REPO/build/dashboard.sh" 2>/dev/null || true
   chmod +x "$REPO/build/dashboard.sh" 2>/dev/null || true
 fi
