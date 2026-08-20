@@ -27,9 +27,9 @@ touch docs/harness/metrics.md
 ```markdown
 # Harness Metrics Log
 
-| Date | Task | Approach | Tokens | $ | First-pass? | Human min | Note |
-|------|------|----------|--------|---|-------------|-----------|------|
-| 2026-07-02 | baseline audit | no harness | 45k | 0.80 | — | 20 | before CLAUDE.md |
+| Date | Task | Approach | Topology | Tokens | $ | LOC diff | First-pass? | Human min | Note |
+|------|------|----------|----------|--------|---|----------|-------------|-----------|------|
+| 2026-07-02 | baseline audit | no harness | n/a | 45k | 0.80 | — | — | 20 | before CLAUDE.md |
 ```
 
 Where the numbers come from: `/cost` at the end of a session shows tokens and cost.
@@ -41,7 +41,7 @@ Record immediately; you won't reconstruct it later.
 
 # MODULE 1 — System Design
 
-## L01. Perception-gap audit + CLAUDE.md v1 + surface map
+## [perception-gap] Perception-gap audit + CLAUDE.md v1 + surface map
 
 ### Step 1.1 — Baseline audit (no CLAUDE.md)
 
@@ -167,7 +167,7 @@ to CLAUDE.md. Log both sessions in metrics.md.
 
 ---
 
-## L02. Skills layer + slash commands
+## [skills-layer] Skills layer + slash commands
 
 ### Step 2.1 — Separate facts from procedures
 
@@ -264,7 +264,7 @@ pointer lines needed). Commit: `feat(harness): skills layer + slash commands`.
 
 # MODULE 2 — Agent Topology
 
-## L03. Subagents: Hub-and-Spoke vs Peer Mesh
+## [topology] Subagents: Hub-and-Spoke vs Peer Mesh
 
 ### Step 3.1 — Create 5 subagents
 
@@ -345,7 +345,7 @@ small tasks — subagents have overhead; don't use them for one-line fixes.
 
 ---
 
-## L04. MCP: custom server + token budget
+## [mcp] MCP: custom server + token budget
 
 ### Step 4.1 — Custom MCP server in Go (~50 lines)
 
@@ -406,8 +406,13 @@ func main() {
 		var out []mat
 		for rows.Next() {
 			var m mat
-			rows.Scan(&m.Name, &m.Thickness, &m.SheetW, &m.SheetH, &m.Price)
+			if err := rows.Scan(&m.Name, &m.Thickness, &m.SheetW, &m.SheetH, &m.Price); err != nil {
+				return mcp.NewToolResultError(err.Error()), nil
+			}
 			out = append(out, m)
+		}
+		if err := rows.Err(); err != nil {
+			return mcp.NewToolResultError(err.Error()), nil
 		}
 		b, _ := json.Marshal(out)
 		return mcp.NewToolResultText(string(b)), nil
@@ -494,7 +499,7 @@ working MCP server · mcp-budget.md · hybrid pair · ≥1 wasteful server disab
 
 # MODULE 3 — CI Pipeline
 
-## L05. Spec-Driven Development
+## [spec-driven] Spec-Driven Development
 
 ### Step 5.1 — Pick a feature
 
@@ -596,7 +601,7 @@ Every retro fix makes the NEXT feature cheaper — that's the harness compoundin
 
 ---
 
-## L06. Quality gates: hooks → TDD → plan-verifier → evals
+## [quality-gates] Quality gates: hooks → TDD → plan-verifier → evals
 
 ### Step 6.1-6.3 — Three hooks
 
@@ -668,13 +673,16 @@ changing code without tests** (the kit's ci/harness-evals.yml turns this into a 
 
 ```bash
 go install github.com/zimmski/go-mutesting/cmd/go-mutesting@latest
-go-mutesting ./internal/parts/ > docs/harness/mutation-report.txt
+harness/mutation/run.sh ./internal/parts/ "agent-written tests"
 ```
 
-Mutation score = the share of "killed" mutants. Compare the score of a package with
-agent-written tests against one with your handwritten tests. If the agent's score is
-noticeably lower, the tests are theater (they verify calls, not behavior) → fix the
-go-testing skill and the retro-spec.
+The kit ships `harness/mutation/run.sh`: it wraps `go-mutesting` and appends the raw
+result to `docs/harness/mutation-report.md` (seeded from
+`templates/mutation-report.md.template` on first run). Mutation score = the share of
+"killed" mutants. Compare the score of a package with agent-written tests against one
+with your handwritten tests (run the script once per package, with a distinct label).
+If the agent's score is noticeably lower, the tests are theater (they verify calls, not
+behavior) → fix the go-testing skill and the retro-spec.
 
 **Module 3 exit:** one feature through the full spec→plan→implement→verify cycle ·
 cost.md + retro.md · 3 working hooks (hand-tested and live-tested) · plan-verifier
@@ -684,7 +692,7 @@ commenting on PRs · 20 traces + baseline pass rate · mutation report with a co
 
 # MODULE 4 — Scale + Production
 
-## L07. Parallel fan-out: worktree × 3
+## [fanout] Parallel fan-out: worktree × 3
 
 ### Step 7.1 — Pick a task that shards
 
@@ -745,7 +753,9 @@ other's files; CLAUDE.md/skills/hooks work in every worktree since it's the same
 
 ### Step 7.4 — You = tech lead
 
-Keep `docs/harness/fanout-log.md` in real time:
+`harness/fanout/run.sh <base-branch> shard-a shard-b shard-c` creates the worktrees
+above and seeds `docs/harness/fanout-log.md` from `templates/fanout-log.md.template`.
+Keep its event table in real time:
 
 ```markdown
 | Time | Shard | Event | My action |
@@ -762,8 +772,9 @@ eats the win.
 
 ### Step 7.5 — Merge + cost delta
 
-Merge in playbook order, `git worktree remove` after each. Then
-`docs/harness/fanout-cost-delta.md`:
+Merge in playbook order, `git worktree remove` after each. Then fill in the "Merge +
+cost delta" table already at the bottom of `docs/harness/fanout-log.md` — same file as
+Step 7.4, not a separate one:
 
 ```markdown
 | Metric | Sequential (estimate: shard-b actual ×3) | Fan-out ×3 |
@@ -780,7 +791,7 @@ Expect: wall-clock ↓ ~2-2.5×, $ roughly flat or slightly ↑, your attention 
 
 ---
 
-## L08. Plugin + CI agent + rollout
+## [plugin-rollout] Plugin + CI agent + rollout
 
 ### Step 8.1 — Package the harness as a plugin
 
@@ -791,7 +802,7 @@ in one action, no manual copying of .claude/.
 
 ### Step 8.2 — CI agent: auto-review on every PR
 
-The reviewer from L03 moves into CI (the kit's ci/agent-review.yml). The rights principle:
+The reviewer from § topology moves into CI (the kit's ci/agent-review.yml). The rights principle:
 the CI agent **comments, never merges**. Trust is grown gradually.
 
 ### Step 8.3 — DevDigest (capstone)

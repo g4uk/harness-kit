@@ -1,4 +1,4 @@
-# harness-kit v1.9.8
+# harness-kit v1.9.9
 
 A shared harness core for three Claude Code working scenarios.
 Progression through each scenario's stages is gated by evidence — exit criteria, not a schedule.
@@ -23,25 +23,32 @@ agents/      researcher, test-writer, implementer, reviewer, doc-writer
 skills/      code-review, testing, db-migrations, frontend      ← EDIT_ME for your stack
 hooks/       guard.sh (PreToolUse, exit 2, fail-closed without jq)
              secrets-scan.sh · fmt.sh (PostToolUse: scan then format the written file)
+             claude-md-limit.sh (PostToolUse: blocks CLAUDE.md past 200 lines)
              tests-green.sh (Stop, scoped to changed packages)
 settings/    settings.project.json / settings.user.json — permissions deny-by-default + hooks
 ci/          harness-evals.yml (invariant #6 as code) · agent-review.yml
              plan-verify.yml (custom plan coherence checks) · hooks-test.yml (regression detection)
-templates/   CLAUDE.md, CLAUDE.local.md, surface-map, decisions, metrics,
-             dispatch-matrix, spec, plan, eval-trace
+templates/   CLAUDE.md, CLAUDE.local.md, surface-map, decisions, metrics (with topology),
+             dispatch-matrix, spec, plan, eval-trace, perception-gap, topology-report,
+             .mcp.json, mcp-budget, mutation-report, migration-playbook, fanout-log
 harness/     installed at the project's harness/ (not root — avoids colliding with the
              project's own docker/ folder for its actual product, if it has one):
   evals/       run.sh — Docker-only orchestrator; output eval (checks) + trajectory eval
                (turns/tools) + cost from the JSON transcript · traces/
   docker/      Dockerfile (harness-runner image) · claude-run.sh · exec.sh (container boundary)
   dashboard/   template.html — performance dashboard, built from docs/metrics.md
+  mutation/    run.sh — go-mutesting wrapper, appends to docs/harness/mutation-report.md
+  fanout/      run.sh — worktree-per-shard for parallel migrations (§ fanout)
 scenarios/   greenfield · onboarding · existing-own — checklist overlays
 docs/        full step-by-step guides the kit was distilled from
 examples/    craftplan-spec.md, plan.md, retro.md — complete spec→plan→retro cycle (learning reference)
-tests/       hooks.test.sh — guard.sh regression tests · runner-smoke.sh — eval runner self-test
+             mcp-server/ — working ~50-line Go MCP server (§ mcp reference implementation)
+tests/       hooks.test.sh — guard.sh regression tests · claude-md-limit.test.sh
+             runner-smoke.sh — eval runner self-test
 build/       dashboard.sh — bakes docs/metrics.md into harness/dashboard/template.html → dist/dashboard.html
 install.sh   → project .claude/ + harness/ (with settings and CI) or ~/.claude (--user)
 VERSION      Kit version for update detection
+.claude-plugin/  plugin.json + marketplace.json — installable via the plugin marketplace
 ```
 
 ## Security model (four layers)

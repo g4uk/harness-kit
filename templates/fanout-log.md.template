@@ -1,0 +1,18 @@
+# Fan-out Log — {{MIGRATION NAME}}
+
+Keep this updated in real time while shards run in parallel (docs/harness-playbook.md §
+fanout Step 7.4). You are the tech lead here: unblock shards, don't write their code.
+
+| Time | Shard | Event | My action |
+|---|---|---|---|
+
+## Merge + cost delta (after all shards land)
+
+| Metric | Sequential (estimate: one shard actual × N) | Fan-out × N |
+|---|---|---|
+| Wall-clock | | |
+| $ total | | |
+| My minutes | | |
+| Merge conflicts | | |
+
+Conclusion: fan-out for ___, NOT for ___.

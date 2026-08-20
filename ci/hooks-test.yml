@@ -1,22 +1,34 @@
 # Test harness-kit hooks: guard.sh regression detection.
-# Runs on every change to hooks/ or evals/. Fails fast; no skips.
+# Runs on every change to hooks/, harness/ scripts, or evals/. Fails fast; no skips.
 name: hooks-test
 on:
   pull_request:
     paths:
       - 'hooks/**'
       - 'tests/**'
+      - 'harness/evals/run.sh'
+      - 'harness/mutation/run.sh'
+      - 'harness/fanout/run.sh'
+      - 'install.sh'
       - '.github/workflows/hooks-test.yml'
   push:
     branches: [main]
     paths:
       - 'hooks/**'
       - 'tests/**'
+      - 'harness/evals/run.sh'
+      - 'harness/mutation/run.sh'
+      - 'harness/fanout/run.sh'
+      - 'install.sh'
 
 jobs:
   smoke:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Syntax-check all kit shell scripts
+        run: bash -n hooks/*.sh install.sh harness/evals/run.sh harness/mutation/run.sh harness/fanout/run.sh
       - name: Run guard.sh smoke tests
         run: bash tests/hooks.test.sh
+      - name: Run claude-md-limit.sh smoke tests
+        run: bash tests/claude-md-limit.test.sh

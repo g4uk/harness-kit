@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "{{server-name}}": {
+      "command": "{{command, e.g. go / node / python}}",
+      "args": ["{{run arg, e.g. run /absolute/path/to/main.go}}"],
+      "env": { "{{ENV_VAR}}": "{{value}}" }
+    }
+  }
+}

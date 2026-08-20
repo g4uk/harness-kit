@@ -1,5 +1,6 @@
 {
   "_comment": "Sample .claude/settings.json: permissions (first layer) + hooks (second). Verify permissions rule syntax at docs.claude.com/en/docs/claude-code/settings — it evolves. deny > ask > allow.",
+  "_comment_mcp": "MCP servers are wired via .mcp.json (see templates/.mcp.json.template), not here — but their tools still need an allow-list entry: pattern is mcp__<server-name>__<tool-name>, e.g. 'mcp__craftplan-materials__search_materials' (docs/harness-playbook.md § mcp). Run the mcp-budget.md.template audit before adding a broad server's tools wholesale.",
   "permissions": {
     "deny": [
       "Read(./.env)", "Read(./.env.*)", "Read(**/secrets/**)", "Read(**/*.pem)",
@@ -22,7 +23,8 @@
       { "matcher": "Write|Edit",
         "hooks": [
           { "type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/secrets-scan.sh" },
-          { "type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/fmt.sh" }
+          { "type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/fmt.sh" },
+          { "type": "command", "command": "\"$CLAUDE_PROJECT_DIR\"/.claude/hooks/claude-md-limit.sh" }
         ] }
     ],
     "PreToolUse": [

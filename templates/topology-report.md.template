@@ -1,0 +1,26 @@
+# Cost-per-Topology Report — {{TASK}}
+
+One real, medium-sized task, run three times from the same starting point under three
+subagent topologies. Full protocol: docs/harness-playbook.md § topology Step 3.3.
+
+- **Run A — monolith.** Fresh session, one instruction, no subagents.
+- **Run B — hub-and-spoke.** Reset to the start point; orchestrator dispatches
+  researcher → (approval stop) → test-writer → implementer → reviewer, passing
+  CONDENSED results between them.
+- **Run C — peer mesh.** Reset again; agents pass results to each other in FULL,
+  no compression through the hub.
+
+Record each entry in docs/metrics.md too (Topology column), then compare here:
+
+| Metric | A: monolith | B: hub-spoke | C: mesh |
+|---|---|---|---|
+| Total tokens | | | |
+| $ | | | |
+| Wall-clock | | | |
+| Tests green on 1st try | | | |
+| Reviewer remarks | | | |
+| My interventions | | | |
+
+## Conclusion
+For tasks like ___ I choose ___, because ___.
+Rule: ___

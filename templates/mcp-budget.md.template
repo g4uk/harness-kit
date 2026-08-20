@@ -1,0 +1,20 @@
+# MCP Token Budget — {{PROJECT}}
+
+Tool definitions of ALL connected MCP servers are injected into EVERY session, whether
+or not any tool is ever called. Audit checklist (docs/harness-playbook.md § mcp Step 4.2):
+
+1. Fresh session → `/context` — inspect the context breakdown, find the MCP-tools share.
+2. Fill in one row per connected server below.
+3. Everything with a "disable" verdict — remove from `.mcp.json` / settings. A single
+   broad official server (30+ tools) commonly costs more context than CLAUDE.md + all
+   skills combined.
+
+| MCP server | Tools | ~tokens in EVERY session | Calls per week | Verdict |
+|---|---|---|---|---|
+| | | | | |
+
+## Rule (write your own)
+- live data / state / auth → MCP (narrow tools, ≤3 per server)
+- knowledge and procedures → Skill
+- a one-off call doable with curl/gh/psql → a bash script inside a Skill, NO MCP
+- broad official servers (30+ tools) → only if I use ≥5 tools weekly

@@ -1,5 +1,7 @@
 # Harness Metrics Log
 # Fill in after EVERY significant session (/cost at session end)
+# Topology: monolith / hub-spoke / mesh / n-a (no subagents) — see templates/topology-report.md.template
+# for a head-to-head comparison when running the SAME task under multiple topologies.
 
-| Date | Task | Approach | Tokens | $ | LOC diff | First-pass? | Human min | Note |
-|------|------|----------|--------|---|----------|-------------|-----------|------|
+| Date | Task | Approach | Topology | Tokens | $ | LOC diff | First-pass? | Human min | Note |
+|------|------|----------|----------|--------|---|----------|-------------|-----------|------|

@@ -1,0 +1,29 @@
+# Playbook: {{FROM}} → {{TO}}
+
+## Shards (independent, no file overlap)
+- shard-a: {{modules}}
+- shard-b: {{modules}}
+- shard-c: {{modules}}
+
+## Shared rules (for ALL agents)
+1. {{the mechanical transformation rule, e.g. "replace log.Printf(...) with slog.Error(...)"}}
+2. {{convention — levels, naming, formatting}}
+3. {{shared dependency, if any — which shard creates it FIRST, others wait for its commit}}
+4. NO other changes in the files. Found a bug — TODO comment, do NOT fix.
+5. Each package/module = its own commit: `{{commit type}}(migration): <package>`
+
+## Invariants
+- {{test command}} green after every package
+- zero {{old pattern}} left in the diff (check: `git grep -n '{{old pattern}}' -- <shard>`)
+
+## Merge order
+{{shard with shared dependency}} (helper) → {{shard}} → {{shard}}. Conflicts are
+resolved by the human, not the agents.
+
+## Launch
+```bash
+harness/fanout/run.sh {{base-branch}} shard-a shard-b shard-c
+```
+Then in each printed worktree: `cd <dir> && claude`, instruct: "Execute this playbook,
+your shard: shard-X." Keep docs/harness/fanout-log.md updated in real time — see
+templates/fanout-log.md.template.

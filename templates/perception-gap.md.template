@@ -1,0 +1,57 @@
+# Perception Gap Audit — {{PROJECT}}
+
+Baseline first: temporarily move CLAUDE.md aside (`mv CLAUDE.md CLAUDE.md.bak`), start a
+clean session, ask the 10 questions below ONE AT A TIME (not as a list). Score the
+answers, write CLAUDE.md v1 against the rows that aren't `correct`, then re-audit in a
+fresh session. Full walkthrough: docs/harness-playbook.md § perception-gap.
+
+## 10 questions (adapt to your repo — keep them specific, not generic)
+1. Describe this project's architecture in 5 sentences.
+2. Where does the core business logic live?
+3. How do I run all tests? A single package/module?
+4. How are DB migrations done here and where do they live?
+5. What's the codegen convention (if any) — source files, how it's regenerated?
+6. How is multi-tenancy / auth implemented? What must never be broken?
+7. What's {{core domain flow}} — from input to what the user sees?
+8. Which external services does the backend call and where are their clients?
+9. What's the error-handling convention in this project's code?
+10. What in this repo is legacy/frozen and must not be touched?
+
+Scores: `correct` / `partial` / `wrong` / `hallucinated` (worst — confidently invented).
+**Every row ≠ correct is a future CLAUDE.md line** — that's the audit's point: CLAUDE.md
+gets written against specific failures, not "about the project" in the abstract.
+
+## Baseline (no CLAUDE.md), {{DATE}}
+
+| # | Question | Score | What exactly is wrong |
+|---|----------|-------|-----------------------|
+| 1 | Architecture | | |
+| 2 | Core logic location | | |
+| 3 | Tests | | |
+| 4 | Migrations | | |
+| 5 | Codegen | | |
+| 6 | Multi-tenancy/auth | | |
+| 7 | {{core domain flow}} | | |
+| 8 | External services | | |
+| 9 | Error handling | | |
+| 10 | Legacy/frozen areas | | |
+
+Score: _/10 correct
+
+## Re-audit (with CLAUDE.md v1), {{DATE}}
+
+| # | Question | Score | What exactly is wrong |
+|---|----------|-------|-----------------------|
+| 1 | Architecture | | |
+| 2 | Core logic location | | |
+| 3 | Tests | | |
+| 4 | Migrations | | |
+| 5 | Codegen | | |
+| 6 | Multi-tenancy/auth | | |
+| 7 | {{core domain flow}} | | |
+| 8 | External services | | |
+| 9 | Error handling | | |
+| 10 | Legacy/frozen areas | | |
+
+Score: _/10 correct — target ≥8/10. Still not `correct`? Add it to CLAUDE.md and re-audit
+again. Log both sessions in docs/metrics.md.

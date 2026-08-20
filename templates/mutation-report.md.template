@@ -1,0 +1,13 @@
+# Mutation Report — {{PROJECT}}
+
+Run `harness/mutation/run.sh <package> [label]` per package (docs/harness-playbook.md §
+quality-gates Step 6.6) — raw output gets appended below automatically. Mutation score = share of
+"killed" mutants. Compare a package with agent-written tests against one with
+handwritten tests: a noticeably lower agent score means the tests verify calls, not
+behavior (theater) → fix the testing skill and the retro-spec.
+
+| Package | Tests written by | Mutation score | Verdict |
+|---|---|---|---|
+| | | | |
+
+## Runs

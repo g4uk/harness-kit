@@ -2,8 +2,9 @@
 
 Run the same gates CI will run:
 
-    bash -n hooks/*.sh install.sh harness/evals/run.sh   # syntax
+    bash -n hooks/*.sh install.sh harness/evals/run.sh harness/mutation/run.sh harness/fanout/run.sh   # syntax
     ./tests/hooks.test.sh                        # guard/scan regression cases
+    ./tests/claude-md-limit.test.sh              # CLAUDE.md line-limit gate
     docker build -t harness-runner:latest harness/docker/
     ./tests/runner-smoke.sh                      # eval runner end-to-end
 
