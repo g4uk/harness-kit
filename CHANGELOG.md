@@ -2,6 +2,12 @@
 
 Version history for harness-kit. See README.md for current structure and usage.
 
+## v1.9.13 (test: hooks.test.sh asserts guard.sh's fail-closed behavior without jq)
+- `guard.sh` correctly BLOCKs everything (exit 2) when `jq` is missing, matching the
+  layer-1 guarantee in README's security model — but nothing in `hooks.test.sh` actually
+  asserted it. Adds a positive regression case, isolating `guard.sh` from `jq` via a
+  temporary empty `PATH` for that one invocation.
+
 ## v1.9.12 (test: claude-md-limit.test.sh skips cleanly without jq)
 - The hook soft-fails (exit 0) without `jq` by design — it's not a security layer. The
   test didn't know that and would silently report 5/7 instead of explaining why two

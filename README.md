@@ -1,4 +1,4 @@
-# harness-kit v1.9.12
+# harness-kit v1.9.13
 
 A shared harness core for three Claude Code working scenarios.
 Progression through each scenario's stages is gated by evidence — exit criteria, not a schedule.
