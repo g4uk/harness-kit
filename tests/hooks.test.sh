@@ -45,6 +45,21 @@ test_guard "allow: chmod normal" '{"tool_input":{"command":"chmod +x script.sh"}
 test_guard "allow: empty cmd" '{"tool_input":{"command":""}}' 0
 test_guard "allow: null cmd" '{"tool_input":{}}' 0
 
+# Regression: guard.sh is fail-closed — without jq it must BLOCK everything (exit 2),
+# never silently allow. This is the specific guarantee the security model's layer-1
+# writeup in README rests on; nothing was asserting it.
+TOTAL=$((TOTAL+1))
+NOJQ_DIR=$(mktemp -d)
+EXIT=0
+echo '{"tool_input":{"command":"cat app.go"}}' | PATH="$NOJQ_DIR" /bin/bash "$GUARD" >/dev/null 2>&1 || EXIT=$?
+rmdir "$NOJQ_DIR"
+if [ "$EXIT" = 2 ]; then
+  echo "✓ deny: jq missing → fail-closed (BLOCKED)"
+  PASS=$((PASS+1))
+else
+  echo "✗ deny: jq missing → fail-closed (expected exit 2, got $EXIT)"
+fi
+
 echo ""
 echo "Pass rate: $PASS/$TOTAL"
 [ "$PASS" = "$TOTAL" ] || exit 1
