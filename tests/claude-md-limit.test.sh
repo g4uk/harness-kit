@@ -4,6 +4,7 @@
 # JSON payload via stdin, and checks the exit code (0 = allowed, 2 = blocked).
 
 set -e
+command -v jq >/dev/null || { echo "SKIP: jq missing (hook soft-fails by design)"; exit 0; }
 HOOK="$(cd "$(dirname "$0")/../hooks" && pwd)/claude-md-limit.sh"
 TMPDIR=$(mktemp -d)
 trap 'rm -rf "$TMPDIR"' EXIT
